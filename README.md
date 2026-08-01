@@ -21,8 +21,11 @@ matter rise into Journey on their own.
   its heaviest and lightest day
 - **Looking back** — flashbacks to this calendar day in past months and years,
   plus one Journey day resurfacing on its own each day
-- **Board** — a closed friend group of up to 20. Orbs appear live as friends fill
-  theirs. Colors only — notes and media never leave your lane
+- **Board** — two views. **Circles** are closed groups of up to 20 joined by
+  invite code, and you can be in several. **Friends** are one-to-one, added by
+  searching a name and accepting a request. Orbs appear live either way, and
+  it is colors only — notes and media never leave your lane
+- **Profile** — a picture and a display name people recognise you by
 - **Streak** — a plant that grows seed → sprout → sapling → young tree → full
   tree, and resets when the run breaks
 
@@ -31,9 +34,10 @@ matter rise into Journey on their own.
 ### 1. Create a Supabase project
 
 Go to [supabase.com](https://supabase.com), create a free project, then open the
-SQL editor and run `supabase/migrations/0001_init.sql` in full. That creates the
-tables, row-level security policies, the media storage bucket, and turns on
-realtime for the board.
+SQL editor and run the migrations in `supabase/migrations/` in order —
+`0001_init.sql` then `0002_friends_avatars_circles.sql`. Together they create
+the tables, row-level security policies, the media and avatar storage buckets,
+and turn on realtime for the board.
 
 ### 2. Point the app at it
 
@@ -114,10 +118,14 @@ rather than having its own icon.
 Your notes, media and emotion breakdown are readable only by you — enforced by
 row-level security at the database, not just hidden in the UI.
 
-Sharing to the group board writes a single color to a separate `board_posts`
-table. That table has no column that could carry a note, a file, or which
-emotions you picked, so there is nothing to leak by accident. Turning sharing
-off deletes the row.
+Sharing a day writes a single color to a separate `shared_colors` table. That
+table has no column that could carry a note, a file, or which emotions you
+picked, so there is nothing to leak by accident. Turning sharing off deletes
+the row.
+
+Who can read that color is decided in the database, not the UI: yourself, anyone
+who shares a circle with you, and anyone you have accepted as a friend. Nobody
+else, including people who merely sent you a request.
 
 ## Commands
 
