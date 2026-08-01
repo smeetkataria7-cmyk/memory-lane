@@ -165,24 +165,41 @@ begin
 end;
 $$;
 
--- ---------- board shares (color only, deliberate per-ball) ----------
--- The board never exposes fills/note/media: only the blended color.
-create view public.board_today
-with (security_invoker = off)
-as
-select
-  b.user_id,
-  p.display_name,
-  b.day,
-  b.blended_color,
-  gm.group_id
-from public.balls b
-join public.profiles p on p.id = b.user_id
-join public.group_members gm on gm.user_id = b.user_id
-where b.shared_to_board
-  and public.is_group_member(gm.group_id);
+-- ---------- board posts (color only, deliberate per-ball) ----------
+-- A separate table rather than a view over balls, for two reasons:
+--   1. Privacy is structural - there is no column here that could leak a
+--      note, a media file, or the emotion breakdown. Only a color.
+--   2. Realtime works. Group members can SELECT these rows, so postgres
+--      change events actually reach them; RLS on balls (correctly) would
+--      never let a friend's insert reach anyone else.
+create table public.board_posts (
+  group_id uuid not null references public.groups (id) on delete cascade,
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  day date not null,
+  color text not null,
+  updated_at timestamptz not null default now(),
+  primary key (group_id, user_id, day)
+);
 
-grant select on public.board_today to authenticated;
+alter table public.board_posts enable row level security;
+
+create policy "group members read the board"
+  on public.board_posts for select to authenticated
+  using (public.is_group_member(group_id));
+
+create policy "users post their own color"
+  on public.board_posts for insert to authenticated
+  with check (user_id = auth.uid() and public.is_group_member(group_id));
+
+create policy "users update their own color"
+  on public.board_posts for update to authenticated
+  using (user_id = auth.uid());
+
+create policy "users unshare their own color"
+  on public.board_posts for delete to authenticated
+  using (user_id = auth.uid());
+
+alter publication supabase_realtime add table public.board_posts;
 
 -- ---------- storage bucket for media ----------
 insert into storage.buckets (id, name, public)

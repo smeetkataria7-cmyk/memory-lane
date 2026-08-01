@@ -75,7 +75,7 @@ export default function BallDetailScreen() {
     if (!ball) return;
     setBall({ ...ball, shared_to_board: value });
     try {
-      await setBoardShare(ball.id, value);
+      await setBoardShare(ball, value);
     } catch {
       setBall(ball);
     }

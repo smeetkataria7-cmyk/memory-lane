@@ -15,13 +15,18 @@ import { emotionColor } from '../theme/tokens';
 type Props = {
   fills: EmotionFill[];
   size: number;
+  // The group board only ever receives a blended color, never the
+  // underlying emotions - so it renders the glaze from that alone.
+  colorOverride?: string;
 };
 
 // A glazed, lit sphere: painterly color-bleed dabs for each emotion,
 // then shadow/light/specular layers that make it read as 3D.
-export const Orb = memo(function Orb({ fills, size }: Props) {
-  const active = fills.filter((f) => f.weight > 0).sort((a, b) => b.weight - a.weight);
-  const base = blendEmotions(fills);
+export const Orb = memo(function Orb({ fills, size, colorOverride }: Props) {
+  const active = colorOverride
+    ? []
+    : fills.filter((f) => f.weight > 0).sort((a, b) => b.weight - a.weight);
+  const base = colorOverride ?? blendEmotions(fills);
 
   // Deterministic dab positions around the sphere for secondary emotions,
   // seeded by index so a given mix always renders the same orb.

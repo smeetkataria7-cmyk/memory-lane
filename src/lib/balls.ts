@@ -1,5 +1,7 @@
 import { File } from 'expo-file-system';
 import { blendEmotions, type EmotionFill } from './blend';
+import { todayKey as dayKey } from './dates';
+import { publishColor, unpublishColor } from './groups';
 import { detectJourney, type JourneyReason } from './journey';
 import { supabase } from './supabase';
 
@@ -29,10 +31,7 @@ export type Ball = {
   created_at: string;
 };
 
-export const todayKey = (d = new Date()): string => {
-  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 10);
-};
+export { todayKey } from './dates';
 
 const extFor = (kind: MediaKind, uri: string): string => {
   const guess = uri.split('?')[0].split('.').pop()?.toLowerCase();
@@ -66,7 +65,7 @@ export async function saveBall(opts: {
   shareToBoard?: boolean;
   day?: string;
 }): Promise<Ball> {
-  const day = opts.day ?? todayKey();
+  const day = opts.day ?? dayKey();
   const auto = detectJourney(opts.fills);
 
   // A manual pin is a deliberate choice - re-saving the day must not undo it.
@@ -94,6 +93,12 @@ export async function saveBall(opts: {
   if (error) throw error;
 
   const ball = data as Ball;
+
+  if (opts.shareToBoard) {
+    await publishColor(opts.userId, day, ball.blended_color);
+  } else {
+    await unpublishColor(opts.userId, day);
+  }
 
   for (const m of opts.media ?? []) {
     const storagePath = await uploadMedia(opts.userId, ball.id, m);
@@ -170,10 +175,16 @@ export async function setJourneyPin(ballId: string, pinned: boolean) {
   if (error) throw error;
 }
 
-export async function setBoardShare(ballId: string, shared: boolean) {
+export async function setBoardShare(ball: Ball, shared: boolean) {
   const { error } = await supabase
     .from('balls')
     .update({ shared_to_board: shared })
-    .eq('id', ballId);
+    .eq('id', ball.id);
   if (error) throw error;
+
+  if (shared) {
+    await publishColor(ball.user_id, ball.day, ball.blended_color);
+  } else {
+    await unpublishColor(ball.user_id, ball.day);
+  }
 }
