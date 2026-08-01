@@ -41,16 +41,21 @@ realtime for the board.
 cp .env.example .env
 ```
 
-Fill in both values from **Project Settings → Data API** in the Supabase
-dashboard:
+Fill in the URL from **Project Settings → Data API** and the key from
+**Project Settings → API Keys**:
 
 ```
 EXPO_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-public-key
+EXPO_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_your-key-here
 ```
 
-The anon key is meant to be public — row-level security is what actually
-protects the data, and every table has it enabled.
+Use the **publishable** key (`sb_publishable_...`; older projects call this the
+anon/public key). It is meant to ship inside the app — row-level security is
+what actually protects the data, and every table has it enabled.
+
+Never use the **secret** key (`sb_secret_...`, or `service_role` on older
+projects). It bypasses row-level security completely and has no business in a
+mobile app.
 
 ### 3. Run it
 
