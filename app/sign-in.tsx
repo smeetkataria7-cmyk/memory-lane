@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Orb } from '../src/components/Orb';
 import { signIn, signUp } from '../src/lib/auth';
+import { signInWithGoogle } from '../src/lib/google';
 import { isSupabaseConfigured } from '../src/lib/supabase';
 import { radii, spacing } from '../src/theme/tokens';
 import { useTheme } from '../src/theme/useTheme';
@@ -26,6 +27,18 @@ export default function SignInScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sentConfirmation, setSentConfirmation] = useState(false);
+
+  const withGoogle = async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      await signInWithGoogle();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Google sign-in did not work.');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const submit = async () => {
     setError(null);
@@ -82,6 +95,21 @@ export default function SignInScreen() {
         ) : null}
 
         <View style={styles.form}>
+          <Pressable
+            onPress={withGoogle}
+            disabled={busy}
+            style={[styles.googleBtn, { backgroundColor: t.surface, borderColor: t.line }]}
+          >
+            <Text style={[styles.googleG, { color: t.ink }]}>G</Text>
+            <Text style={[styles.googleText, { color: t.ink }]}>Continue with Google</Text>
+          </Pressable>
+
+          <View style={styles.divider}>
+            <View style={[styles.rule, { backgroundColor: t.line }]} />
+            <Text style={[styles.dividerText, { color: t.inkFaint }]}>or</Text>
+            <View style={[styles.rule, { backgroundColor: t.line }]} />
+          </View>
+
           {mode === 'up' ? (
             <TextInput
               value={name}
@@ -166,4 +194,23 @@ const styles = StyleSheet.create({
   btnText: { fontSize: 16, fontWeight: '700' },
   switch: { fontSize: 14, textAlign: 'center', marginTop: spacing.sm, fontWeight: '600' },
   error: { fontSize: 14, textAlign: 'center' },
+  googleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderRadius: radii.pill,
+    paddingVertical: 14,
+  },
+  googleG: { fontSize: 17, fontWeight: '700' },
+  googleText: { fontSize: 16, fontWeight: '700' },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginVertical: spacing.xs,
+  },
+  rule: { flex: 1, height: 1 },
+  dividerText: { fontSize: 13, fontWeight: '600' },
 });

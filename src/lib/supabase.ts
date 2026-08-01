@@ -22,6 +22,10 @@ export const supabase = createClient(
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: Platform.OS === 'web',
+      // PKCE is the flow that suits a mobile app: no client secret is
+      // shipped, and the code that comes back is useless without the
+      // verifier held on this device.
+      flowType: 'pkce',
     },
   },
 );

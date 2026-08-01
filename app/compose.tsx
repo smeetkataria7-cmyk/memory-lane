@@ -20,6 +20,7 @@ import { useAuth } from '../src/lib/auth';
 import { saveBall, type PendingMedia } from '../src/lib/balls';
 import type { EmotionFill } from '../src/lib/blend';
 import { detectJourney, journeyReasonLabel } from '../src/lib/journey';
+import { refreshReminders } from '../src/lib/reminders';
 import { radii, spacing } from '../src/theme/tokens';
 import { useTheme } from '../src/theme/useTheme';
 
@@ -84,6 +85,8 @@ export default function ComposeScreen() {
     setBusy(true);
     try {
       await saveBall({ userId, fills, note, media, shareToBoard: share });
+      // Today is done - drop tonight's nudge, keep the rest of the window.
+      await refreshReminders(true).catch(() => {});
       router.replace('/lane');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save today.');

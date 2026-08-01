@@ -28,6 +28,8 @@ matter rise into Journey on their own.
 - **Profile** — a picture and a display name people recognise you by
 - **Streak** — a plant that grows seed → sprout → sapling → young tree → full
   tree, and resets when the run breaks
+- **Nightly reminder** — an optional nudge at a time you pick, automatically
+  skipped on evenings you have already filled the day
 
 ## Setup
 
@@ -61,7 +63,35 @@ Never use the **secret** key (`sb_secret_...`, or `service_role` on older
 projects). It bypasses row-level security completely and has no business in a
 mobile app.
 
-### 3. Run it
+### 3. Turn on Google sign-in (optional but recommended)
+
+Email and password work with no extra setup. Google is worth the fifteen
+minutes: one tap instead of a password, and the app picks up the person's real
+name and picture, so the board is readable immediately.
+
+**In Google Cloud Console** ([console.cloud.google.com](https://console.cloud.google.com)):
+
+1. Create a project, then go to **APIs & Services → OAuth consent screen**.
+   Choose **External**, fill in an app name and your email, and save. While it
+   stays in "Testing" you must add each friend under **Test users** — so once
+   you are ready to hand it round, hit **Publish app**.
+2. Go to **Credentials → Create credentials → OAuth client ID → Web
+   application**.
+3. Under **Authorised redirect URIs**, add your Supabase callback:
+   `https://YOUR-PROJECT-REF.supabase.co/auth/v1/callback`
+4. Copy the **Client ID** and **Client secret**.
+
+**In Supabase:** Authentication → Sign In / Providers → **Google** → enable it,
+paste the client ID and secret, save.
+
+Also add the app's own redirect under Authentication → **URL Configuration →
+Redirect URLs**: `memorylane://auth/callback`
+
+Nothing to change in the code — the button is already on the sign-in screen. It
+is shown whether or not the provider is configured, so until you finish the
+steps above, tapping it returns an "unsupported provider" error.
+
+### 4. Run it
 
 ```bash
 npm install

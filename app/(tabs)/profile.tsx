@@ -11,10 +11,11 @@ import {
   View,
 } from 'react-native';
 import { Avatar } from '../../src/components/Avatar';
+import { ReminderCard } from '../../src/components/ReminderCard';
 import { Screen } from '../../src/components/Screen';
 import { StreakPlant, nextStage } from '../../src/components/StreakPlant';
 import { signOut, useAuth } from '../../src/lib/auth';
-import { listBalls, type Ball } from '../../src/lib/balls';
+import { listBalls, todayKey, type Ball } from '../../src/lib/balls';
 import { loadFriendships } from '../../src/lib/friends';
 import { myGroups } from '../../src/lib/groups';
 import { currentStreak } from '../../src/lib/lane';
@@ -186,6 +187,8 @@ export default function ProfileScreen() {
           <Stat value={balls.length} label="days filled" />
           <Stat value={journeyCount} label="in Journey" />
         </View>
+
+        <ReminderCard filledToday={balls.some((b) => b.day === todayKey())} />
 
         <Pressable
           onPress={() => router.push('/friends')}

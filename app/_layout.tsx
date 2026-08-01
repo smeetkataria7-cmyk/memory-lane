@@ -1,3 +1,4 @@
+import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -7,6 +8,15 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../src/lib/auth';
 import { isSupabaseConfigured } from '../src/lib/supabase';
 import { useTheme } from '../src/theme/useTheme';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
 
 function AuthGate() {
   const { session, loading } = useAuth();

@@ -8,6 +8,7 @@ import { Recaps } from '../../src/components/Recaps';
 import { Screen } from '../../src/components/Screen';
 import { useAuth } from '../../src/lib/auth';
 import { listBalls, todayKey, type Ball } from '../../src/lib/balls';
+import { refreshReminders } from '../../src/lib/reminders';
 import { useEmotionPool } from '../../src/lib/useEmotionPool';
 import { POOL_TOTAL, radii, spacing } from '../../src/theme/tokens';
 import { useTheme } from '../../src/theme/useTheme';
@@ -31,9 +32,13 @@ export default function TodayScreen() {
       listBalls(userId, 400)
         .then((all) => {
           if (!alive) return;
+          const today = all.find((b) => b.day === todayKey()) ?? null;
           setBalls(all);
-          setExisting(all.find((b) => b.day === todayKey()) ?? null);
+          setExisting(today);
           setChecked(true);
+          // Top the reminder window back up on every open, so someone who
+          // has not launched the app in two weeks still gets nudged.
+          refreshReminders(today !== null).catch(() => {});
         })
         .catch(() => alive && setChecked(true));
       return () => {
