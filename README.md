@@ -64,8 +64,50 @@ npm install
 npm start
 ```
 
-Install **Expo Go** on your phone and scan the QR code. No App Store build
-needed to try it, or to hand it to friends on the same network.
+Install **Expo Go** on your phone and scan the QR code. Phone and laptop need to
+be on the same Wi-Fi. This is for developing — it only runs while the dev server
+is up, so it is not how you hand the app to anyone else.
+
+## Giving it to friends (Android)
+
+This produces a real installable `.apk` with its own icon. No Play Store, no
+fees, and it keeps working when your laptop is off.
+
+```bash
+npm install -g eas-cli
+eas login                 # free Expo account
+eas init                  # links this project, once
+```
+
+The app's Supabase values are baked in at build time, and `.env` is not uploaded
+to EAS, so set them once as build-time environment variables:
+
+```bash
+eas env:create --environment preview --name EXPO_PUBLIC_SUPABASE_URL \
+  --value "https://your-project-ref.supabase.co" --visibility plaintext
+eas env:create --environment preview --name EXPO_PUBLIC_SUPABASE_ANON_KEY \
+  --value "sb_publishable_your-key-here" --visibility plaintext
+```
+
+Then build:
+
+```bash
+eas build --platform android --profile preview
+```
+
+The build runs on Expo's servers (~10-15 minutes on the free tier) and ends with
+a download link. Share that link — or the `.apk` itself — in the group chat.
+Friends tap it, accept Android's "install from unknown source" prompt once, and
+they're in.
+
+To ship a fix later, rebuild and send the new link.
+
+### iPhone friends
+
+There is no free route. Apple requires a **$99/year** Developer Program account
+to put an app on someone's iPhone via TestFlight. Until then, iPhone users can
+run it through Expo Go with `eas update`, which works but lives inside Expo Go
+rather than having its own icon.
 
 ## How privacy works here
 
