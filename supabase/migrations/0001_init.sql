@@ -210,3 +210,20 @@ create policy "users manage their own media files"
   on storage.objects for all to authenticated
   using (bucket_id = 'ball-media' and (storage.foldername(name))[1] = auth.uid()::text)
   with check (bucket_id = 'ball-media' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- ---------- grants ----------
+-- Stated explicitly so this migration does not depend on the project's
+-- "automatically expose new tables" setting. Nothing is granted to anon:
+-- every screen in the app requires a signed-in user. Row-level security
+-- above is what decides which rows each of these can actually touch.
+grant usage on schema public to authenticated;
+
+grant select, insert, update on public.profiles to authenticated;
+grant select, insert, update, delete on public.balls to authenticated;
+grant select, insert, delete on public.ball_media to authenticated;
+grant select, insert on public.groups to authenticated;
+grant select, insert, delete on public.group_members to authenticated;
+grant select, insert, update, delete on public.board_posts to authenticated;
+
+grant execute on function public.join_group_with_code(text) to authenticated;
+grant execute on function public.is_group_member(uuid) to authenticated;
