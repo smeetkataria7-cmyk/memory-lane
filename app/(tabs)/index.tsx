@@ -4,9 +4,10 @@ import { useFocusEffect } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { EmotionPicker } from '../../src/components/EmotionPicker';
 import { Orb } from '../../src/components/Orb';
+import { Recaps } from '../../src/components/Recaps';
 import { Screen } from '../../src/components/Screen';
 import { useAuth } from '../../src/lib/auth';
-import { getBall, todayKey, type Ball } from '../../src/lib/balls';
+import { listBalls, todayKey, type Ball } from '../../src/lib/balls';
 import { useEmotionPool } from '../../src/lib/useEmotionPool';
 import { POOL_TOTAL, radii, spacing } from '../../src/theme/tokens';
 import { useTheme } from '../../src/theme/useTheme';
@@ -16,6 +17,7 @@ export default function TodayScreen() {
   const router = useRouter();
   const { userId } = useAuth();
   const pool = useEmotionPool();
+  const [balls, setBalls] = useState<Ball[]>([]);
   const [existing, setExisting] = useState<Ball | null>(null);
   const [checked, setChecked] = useState(false);
 
@@ -26,12 +28,12 @@ export default function TodayScreen() {
         setChecked(true);
         return;
       }
-      getBall(userId, todayKey())
-        .then((b) => {
-          if (alive) {
-            setExisting(b);
-            setChecked(true);
-          }
+      listBalls(userId, 400)
+        .then((all) => {
+          if (!alive) return;
+          setBalls(all);
+          setExisting(all.find((b) => b.day === todayKey()) ?? null);
+          setChecked(true);
         })
         .catch(() => alive && setChecked(true));
       return () => {
@@ -45,19 +47,25 @@ export default function TodayScreen() {
   if (checked && existing) {
     return (
       <Screen title="Today">
-        <View style={styles.done}>
-          <Orb size={200} fills={existing.fills} />
-          <Text style={[styles.doneTitle, { color: t.ink }]}>Today is filled in.</Text>
-          {existing.note ? (
-            <Text style={[styles.doneNote, { color: t.inkMuted }]}>{existing.note}</Text>
-          ) : null}
-          <Pressable
-            onPress={() => router.push('/lane')}
-            style={[styles.btn, { backgroundColor: t.surface2 }]}
-          >
-            <Text style={[styles.btnText, { color: t.inkMuted }]}>See your lane</Text>
-          </Pressable>
-        </View>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.done}>
+            <Orb size={180} fills={existing.fills} />
+            <Text style={[styles.doneTitle, { color: t.ink }]}>Today is filled in.</Text>
+            {existing.note ? (
+              <Text style={[styles.doneNote, { color: t.inkMuted }]}>{existing.note}</Text>
+            ) : null}
+            <Pressable
+              onPress={() => router.push('/lane')}
+              style={[styles.btn, { backgroundColor: t.surface2 }]}
+            >
+              <Text style={[styles.btnText, { color: t.inkMuted }]}>See your lane</Text>
+            </Pressable>
+          </View>
+          <Recaps balls={balls} />
+        </ScrollView>
       </Screen>
     );
   }
@@ -124,6 +132,8 @@ export default function TodayScreen() {
             </Text>
           </Pressable>
         </View>
+
+        <Recaps balls={balls} />
       </ScrollView>
     </Screen>
   );
