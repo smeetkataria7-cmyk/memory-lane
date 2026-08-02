@@ -30,6 +30,19 @@
     "plugins": [
       "expo-router",
       [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#f1f2f7",
+          "dark": {
+            "image": "./assets/splash-icon.png",
+            "backgroundColor": "#131220"
+          }
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "photosPermission": "Memory Lane uses your photos so you can keep one with the day you're saving.",
