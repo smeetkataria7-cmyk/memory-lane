@@ -21,10 +21,12 @@ export default function TodayScreen() {
   const [balls, setBalls] = useState<Ball[]>([]);
   const [existing, setExisting] = useState<Ball | null>(null);
   const [checked, setChecked] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       let alive = true;
+      setEditing(false);
       if (!userId) {
         setChecked(true);
         return;
@@ -36,8 +38,6 @@ export default function TodayScreen() {
           setBalls(all);
           setExisting(today);
           setChecked(true);
-          // Top the reminder window back up on every open, so someone who
-          // has not launched the app in two weeks still gets nudged.
           refreshReminders(today !== null).catch(() => {});
         })
         .catch(() => alive && setChecked(true));
@@ -47,9 +47,17 @@ export default function TodayScreen() {
     }, [userId]),
   );
 
-  const empty = pool.used === 0;
+  const startEditing = () => {
+    if (existing) {
+      pool.load(existing.fills as { emotion: any; weight: number }[]);
+    }
+    setEditing(true);
+  };
 
-  if (checked && existing) {
+  const empty = pool.used === 0;
+  const showPicker = !existing || editing;
+
+  if (checked && !showPicker) {
     return (
       <Screen title="Today">
         <ScrollView
@@ -57,17 +65,25 @@ export default function TodayScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.done}>
-            <Orb size={180} fills={existing.fills} />
+            <Orb size={180} fills={existing!.fills} />
             <Text style={[styles.doneTitle, { color: t.ink }]}>Today is filled in.</Text>
-            {existing.note ? (
-              <Text style={[styles.doneNote, { color: t.inkMuted }]}>{existing.note}</Text>
+            {existing!.note ? (
+              <Text style={[styles.doneNote, { color: t.inkMuted }]}>{existing!.note}</Text>
             ) : null}
-            <Pressable
-              onPress={() => router.push('/lane')}
-              style={[styles.btn, { backgroundColor: t.surface2 }]}
-            >
-              <Text style={[styles.btnText, { color: t.inkMuted }]}>See your lane</Text>
-            </Pressable>
+            <View style={styles.doneActions}>
+              <Pressable
+                onPress={() => router.push('/lane')}
+                style={[styles.btn, { backgroundColor: t.surface2 }]}
+              >
+                <Text style={[styles.btnText, { color: t.inkMuted }]}>See your lane</Text>
+              </Pressable>
+              <Pressable
+                onPress={startEditing}
+                style={[styles.btn, { backgroundColor: t.accent }]}
+              >
+                <Text style={[styles.btnText, { color: '#fff' }]}>Edit</Text>
+              </Pressable>
+            </View>
           </View>
           <Recaps balls={balls} />
         </ScrollView>
@@ -157,4 +173,5 @@ const styles = StyleSheet.create({
   done: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
   doneTitle: { fontSize: 20, fontWeight: '700' },
   doneNote: { fontSize: 15, textAlign: 'center', maxWidth: 300, lineHeight: 22 },
+  doneActions: { flexDirection: 'row', gap: spacing.sm },
 });

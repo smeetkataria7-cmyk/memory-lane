@@ -33,16 +33,20 @@ export default function CirclesScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const refresh = async () => {
     if (!userId) return;
-    setGroups(await myGroups(userId));
+    try {
+      setGroups(await myGroups(userId));
+      setLoadError(null);
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : 'Could not load circles.');
+    }
   };
 
   useEffect(() => {
-    refresh()
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    refresh().finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
@@ -79,6 +83,16 @@ export default function CirclesScreen() {
 
       {loading ? (
         <ActivityIndicator color={t.accent} />
+      ) : loadError ? (
+        <View style={styles.errorBox}>
+          <Text style={{ color: t.danger, fontSize: 14 }}>{loadError}</Text>
+          <Pressable
+            onPress={() => { setLoading(true); refresh().finally(() => setLoading(false)); }}
+            style={[styles.btn, { backgroundColor: t.surface2, marginTop: spacing.sm }]}
+          >
+            <Text style={[styles.btnText, { color: t.inkMuted }]}>Try again</Text>
+          </Pressable>
+        </View>
       ) : groups.length > 0 ? (
         <View style={{ gap: spacing.sm }}>
           {groups.map((g) => (
@@ -134,7 +148,7 @@ export default function CirclesScreen() {
           style={[styles.input, { backgroundColor: t.paper, borderColor: t.line, color: t.ink }]}
         />
         <Pressable
-          disabled={busy || !code.trim()}
+          disabled={busy || !code.trim() || !userId}
           onPress={() => run(() => joinGroup(code), () => setCode(''))}
           style={[styles.btn, { backgroundColor: !code.trim() ? t.surface2 : t.accent }]}
         >
@@ -145,7 +159,11 @@ export default function CirclesScreen() {
       </View>
 
       {busy ? <ActivityIndicator color={t.accent} /> : null}
-      {error ? <Text style={{ color: t.danger }}>{error}</Text> : null}
+      {error ? (
+        <View style={[styles.card, { backgroundColor: t.danger + '18', borderColor: t.danger }]}>
+          <Text style={{ color: t.danger, fontSize: 14, fontWeight: '600' }}>{error}</Text>
+        </View>
+      ) : null}
     </ScrollView>
   );
 }
@@ -177,4 +195,5 @@ const styles = StyleSheet.create({
   },
   btn: { borderRadius: radii.pill, paddingVertical: 13, alignItems: 'center' },
   btnText: { fontSize: 15, fontWeight: '700' },
+  errorBox: { alignItems: 'center', paddingVertical: spacing.md },
 });

@@ -63,6 +63,12 @@ export function useEmotionPool(initial?: Partial<Weights>) {
 
   const reset = useCallback(() => setWeights({ ...ZERO }), []);
 
+  const load = useCallback((fills: { emotion: EmotionKey; weight: number }[]) => {
+    const w = { ...ZERO };
+    for (const f of fills) w[f.emotion] = f.weight;
+    setWeights(w);
+  }, []);
+
   useEffect(() => stop, [stop]);
 
   const fills: EmotionFill[] = EMOTIONS.filter((e) => weights[e.key] > 0).map(
@@ -70,5 +76,5 @@ export function useEmotionPool(initial?: Partial<Weights>) {
   );
   const used = Object.values(weights).reduce((s, v) => s + v, 0);
 
-  return { weights, fills, used, start, stop, clearOne, reset };
+  return { weights, fills, used, start, stop, clearOne, reset, load };
 }
