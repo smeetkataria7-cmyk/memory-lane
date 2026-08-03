@@ -184,3 +184,50 @@ export async function loadSharedMedia(userId: string, day: string): Promise<Shar
   if (error) return [];
   return (data ?? []) as SharedMedia[];
 }
+
+// Who a day is shared with. An empty list means the day is private -
+// there is no "everyone" value, so widening is always a deliberate pick.
+export type ShareTarget =
+  | { kind: 'group'; id: string }
+  | { kind: 'friend'; id: string };
+
+export async function setAudience(
+  userId: string,
+  day: string,
+  targets: ShareTarget[],
+): Promise<void> {
+  // Replace rather than merge: the picker always submits the full list,
+  // so anything absent from it is something the user just unchecked.
+  const { error: clearError } = await supabase
+    .from('share_audience')
+    .delete()
+    .eq('user_id', userId)
+    .eq('day', day);
+  if (clearError) throw clearError;
+
+  if (targets.length === 0) return;
+
+  const { error } = await supabase.from('share_audience').insert(
+    targets.map((t) => ({
+      user_id: userId,
+      day,
+      group_id: t.kind === 'group' ? t.id : null,
+      friend_id: t.kind === 'friend' ? t.id : null,
+    })),
+  );
+  if (error) throw error;
+}
+
+export async function loadAudience(userId: string, day: string): Promise<ShareTarget[]> {
+  const { data, error } = await supabase
+    .from('share_audience')
+    .select('group_id, friend_id')
+    .eq('user_id', userId)
+    .eq('day', day);
+  if (error) return [];
+  return (data ?? []).map((r) =>
+    r.group_id
+      ? ({ kind: 'group', id: r.group_id as string } as const)
+      : ({ kind: 'friend', id: r.friend_id as string } as const),
+  );
+}

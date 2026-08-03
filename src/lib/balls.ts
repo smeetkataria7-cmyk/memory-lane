@@ -1,7 +1,14 @@
 import { File } from 'expo-file-system';
 import { blendEmotions, type EmotionFill } from './blend';
 import { todayKey as dayKey } from './dates';
-import { publishColor, publishMedia, unpublishColor, unpublishMedia } from './groups';
+import {
+  publishColor,
+  publishMedia,
+  setAudience,
+  unpublishColor,
+  unpublishMedia,
+  type ShareTarget,
+} from './groups';
 import { detectJourney, type JourneyReason } from './journey';
 import { supabase } from './supabase';
 
@@ -62,11 +69,13 @@ export async function saveBall(opts: {
   fills: EmotionFill[];
   note?: string;
   media?: PendingMedia[];
-  shareToBoard?: boolean;
+  shareWith?: ShareTarget[];
   day?: string;
 }): Promise<Ball> {
   const day = opts.day ?? dayKey();
   const auto = detectJourney(opts.fills);
+  const shareWith = opts.shareWith ?? [];
+  const shared = shareWith.length > 0;
 
   // A manual pin is a deliberate choice - re-saving the day must not undo it.
   const existing = await getBall(opts.userId, day);
@@ -83,7 +92,7 @@ export async function saveBall(opts: {
         note: opts.note?.trim() ? opts.note.trim() : null,
         journey: keepManual || auto !== null,
         journey_reason: keepManual ? 'manual' : auto,
-        shared_to_board: opts.shareToBoard ?? false,
+        shared_to_board: shared,
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'user_id,day' },
@@ -107,7 +116,7 @@ export async function saveBall(opts: {
     uploadedMedia.push({ storage_path: storagePath, kind: m.kind });
   }
 
-  if (opts.shareToBoard) {
+  if (shared) {
     await publishColor(opts.userId, day, ball.blended_color);
     const allMedia = await listMedia(ball.id);
     await publishMedia(
@@ -119,6 +128,7 @@ export async function saveBall(opts: {
     await unpublishColor(opts.userId, day);
     await unpublishMedia(opts.userId, day);
   }
+  await setAudience(opts.userId, day, shareWith);
 
   return ball;
 }
@@ -184,7 +194,8 @@ export async function setJourneyPin(ballId: string, pinned: boolean) {
   if (error) throw error;
 }
 
-export async function setBoardShare(ball: Ball, shared: boolean) {
+export async function setBoardShare(ball: Ball, targets: ShareTarget[]) {
+  const shared = targets.length > 0;
   const { error } = await supabase
     .from('balls')
     .update({ shared_to_board: shared })
@@ -203,4 +214,5 @@ export async function setBoardShare(ball: Ball, shared: boolean) {
     await unpublishColor(ball.user_id, ball.day);
     await unpublishMedia(ball.user_id, ball.day);
   }
+  await setAudience(ball.user_id, ball.day, targets);
 }

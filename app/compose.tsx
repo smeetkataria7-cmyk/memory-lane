@@ -9,15 +9,16 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Orb } from '../src/components/Orb';
+import { SharePicker } from '../src/components/SharePicker';
 import { useAuth } from '../src/lib/auth';
 import { saveBall, type PendingMedia } from '../src/lib/balls';
+import type { ShareTarget } from '../src/lib/groups';
 import type { EmotionFill } from '../src/lib/blend';
 import { detectJourney, journeyReasonLabel } from '../src/lib/journey';
 import { refreshReminders } from '../src/lib/reminders';
@@ -36,7 +37,8 @@ export default function ComposeScreen() {
 
   const [note, setNote] = useState('');
   const [media, setMedia] = useState<PendingMedia[]>([]);
-  const [share, setShare] = useState(false);
+  const [shareWith, setShareWith] = useState<ShareTarget[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -84,7 +86,7 @@ export default function ComposeScreen() {
     setError(null);
     setBusy(true);
     try {
-      await saveBall({ userId, fills, note, media, shareToBoard: share });
+      await saveBall({ userId, fills, note, media, shareWith });
       // Today is done - drop tonight's nudge, keep the rest of the window.
       await refreshReminders(true).catch(() => {});
       router.replace('/lane');
@@ -184,15 +186,30 @@ export default function ComposeScreen() {
         </View>
       ) : null}
 
-      <View style={[styles.shareRow, { backgroundColor: t.surface, borderColor: t.line }]}>
+      <Pressable
+        onPress={() => setPickerOpen(true)}
+        style={[styles.shareRow, { backgroundColor: t.surface, borderColor: t.line }]}
+      >
         <View style={styles.shareCopy}>
-          <Text style={[styles.shareTitle, { color: t.ink }]}>Share to the group board</Text>
+          <Text style={[styles.shareTitle, { color: t.ink }]}>Share with</Text>
           <Text style={[styles.shareSub, { color: t.inkMuted }]}>
-            Only the color. Your words and media stay private.
+            {shareWith.length === 0
+              ? 'Nobody — this day stays private'
+              : `${shareWith.length} selected. They see your color and media; your words stay private.`}
           </Text>
         </View>
-        <Switch value={share} onValueChange={setShare} />
-      </View>
+        <Text style={[styles.shareChevron, { color: t.accent }]}>
+          {shareWith.length === 0 ? 'Choose' : 'Change'} ›
+        </Text>
+      </Pressable>
+
+      <SharePicker
+        visible={pickerOpen}
+        userId={userId}
+        value={shareWith}
+        onClose={() => setPickerOpen(false)}
+        onChange={setShareWith}
+      />
 
       {error ? <Text style={[styles.error, { color: t.danger }]}>{error}</Text> : null}
 
@@ -267,7 +284,8 @@ const styles = StyleSheet.create({
   },
   shareCopy: { flex: 1, gap: 2 },
   shareTitle: { fontSize: 15, fontWeight: '700' },
-  shareSub: { fontSize: 13 },
+  shareSub: { fontSize: 13, lineHeight: 18 },
+  shareChevron: { fontSize: 14, fontWeight: '700' },
   error: { fontSize: 14 },
   actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs },
   btn: { paddingVertical: 15, paddingHorizontal: 24, borderRadius: radii.pill },

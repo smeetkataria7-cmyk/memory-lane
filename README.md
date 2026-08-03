@@ -24,7 +24,9 @@ matter rise into Journey on their own.
 - **Board** — two views. **Circles** are closed groups of up to 20 joined by
   invite code, and you can be in several. **Friends** are one-to-one, added by
   searching a name and accepting a request. Orbs appear live either way, and
-  it is colors only — notes and media never leave your lane
+  tapping one opens whatever that person shared. Every day is shared with an
+  audience you pick — any mix of specific circles and specific friends. Your
+  written note never leaves your lane
 - **Profile** — a picture and a display name people recognise you by
 - **Streak** — a plant that grows seed → sprout → sapling → young tree → full
   tree, and resets when the run breaks
@@ -145,17 +147,24 @@ rather than having its own icon.
 
 ## How privacy works here
 
-Your notes, media and emotion breakdown are readable only by you — enforced by
-row-level security at the database, not just hidden in the UI.
+Your written note and your emotion breakdown are readable only by you — enforced
+by row-level security at the database, not just hidden in the UI. Nothing you
+share ever carries them.
 
-Sharing a day writes a single color to a separate `shared_colors` table. That
-table has no column that could carry a note, a file, or which emotions you
-picked, so there is nothing to leak by accident. Turning sharing off deletes
-the row.
+Sharing a day writes a color to `shared_colors` and, if you attached any,
+references to your photos, video and voice notes to `shared_media`. Neither
+table has a column that could carry your note or which emotions you picked.
+Unsharing deletes both.
 
-Who can read that color is decided in the database, not the UI: yourself, anyone
-who shares a circle with you, and anyone you have accepted as a friend. Nobody
-else, including people who merely sent you a request.
+Who can read them is decided in the database, not the UI. Each shared day has an
+audience in `share_audience` — the specific circles and specific friends you
+ticked when you shared it. A day shared with one friend is readable by that
+friend and nobody else, not even people in your circles. Every read goes through
+`can_see_share`, including the signed URLs for media files, so a path leaking
+out is not enough to open it.
+
+An empty audience is the default and means private. There is no "everyone"
+value — widening is always something you picked.
 
 ## Commands
 

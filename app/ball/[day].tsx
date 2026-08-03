@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Orb } from '../../src/components/Orb';
+import { SharePicker } from '../../src/components/SharePicker';
 import { useAuth } from '../../src/lib/auth';
 import {
   getBall,
@@ -26,6 +27,7 @@ import {
   type Ball,
   type BallMedia,
 } from '../../src/lib/balls';
+import { loadAudience, type ShareTarget } from '../../src/lib/groups';
 import { journeyReasonLabel } from '../../src/lib/journey';
 import { formatDay } from '../../src/lib/lane';
 import { EMOTIONS, radii, spacing } from '../../src/theme/tokens';
@@ -70,6 +72,8 @@ export default function BallDetailScreen() {
   const [media, setMedia] = useState<(BallMedia & { url: string | null })[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const [shareWith, setShareWith] = useState<ShareTarget[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -79,11 +83,17 @@ export default function BallDetailScreen() {
         if (!alive) return;
         setBall(b);
         if (b) {
-          const rows = await listMedia(b.id);
+          const [rows, audience] = await Promise.all([
+            listMedia(b.id),
+            loadAudience(userId, b.day),
+          ]);
           const withUrls = await Promise.all(
             rows.map(async (r) => ({ ...r, url: await signedMediaUrl(r.storage_path) })),
           );
-          if (alive) setMedia(withUrls);
+          if (alive) {
+            setMedia(withUrls);
+            setShareWith(audience);
+          }
         }
       })
       .catch(() => {})
@@ -104,13 +114,16 @@ export default function BallDetailScreen() {
     }
   };
 
-  const toggleShare = async (value: boolean) => {
+  const applyShare = async (targets: ShareTarget[]) => {
     if (!ball) return;
-    setBall({ ...ball, shared_to_board: value });
+    const before = ball;
+    setShareWith(targets);
+    setBall({ ...ball, shared_to_board: targets.length > 0 });
     try {
-      await setBoardShare(ball, value);
+      await setBoardShare(ball, targets);
     } catch {
-      setBall(ball);
+      setBall(before);
+      loadAudience(before.user_id, before.day).then(setShareWith).catch(() => {});
     }
   };
 
@@ -232,16 +245,31 @@ export default function BallDetailScreen() {
           <Switch value={ball.journey} onValueChange={togglePin} />
         </View>
 
-        <View style={[styles.row, { backgroundColor: t.surface, borderColor: t.line }]}>
+        <Pressable
+          onPress={() => setPickerOpen(true)}
+          style={[styles.row, { backgroundColor: t.surface, borderColor: t.line }]}
+        >
           <View style={styles.rowCopy}>
-            <Text style={[styles.rowTitle, { color: t.ink }]}>Share to the group board</Text>
+            <Text style={[styles.rowTitle, { color: t.ink }]}>Share with</Text>
             <Text style={[styles.rowSub, { color: t.inkMuted }]}>
-              Only the color leaves this screen.
+              {shareWith.length === 0
+                ? 'Nobody — this day stays private'
+                : `${shareWith.length} selected. Your note stays private.`}
             </Text>
           </View>
-          <Switch value={ball.shared_to_board} onValueChange={toggleShare} />
-        </View>
+          <Text style={[styles.rowAction, { color: t.accent }]}>
+            {shareWith.length === 0 ? 'Choose' : 'Change'} ›
+          </Text>
+        </Pressable>
       </ScrollView>
+
+      <SharePicker
+        visible={pickerOpen}
+        userId={userId}
+        value={shareWith}
+        onClose={() => setPickerOpen(false)}
+        onChange={applyShare}
+      />
 
       <Modal visible={!!viewingImage} transparent animationType="fade">
         <Pressable
@@ -293,7 +321,8 @@ const styles = StyleSheet.create({
   },
   rowCopy: { flex: 1, gap: 2 },
   rowTitle: { fontSize: 15, fontWeight: '700' },
-  rowSub: { fontSize: 13 },
+  rowSub: { fontSize: 13, lineHeight: 18 },
+  rowAction: { fontSize: 14, fontWeight: '700' },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.9)',
