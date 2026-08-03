@@ -1,7 +1,12 @@
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Dimensions,
+  Image,
+  Linking,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,18 +17,44 @@ import { Avatar } from '../../src/components/Avatar';
 import { Orb } from '../../src/components/Orb';
 import { Screen } from '../../src/components/Screen';
 import { useAuth } from '../../src/lib/auth';
+import { signedMediaUrl } from '../../src/lib/balls';
 import { loadFriendBoard, type FriendSlot } from '../../src/lib/friends';
 import {
   loadBoard,
+  loadSharedMedia,
   myGroups,
   subscribeColors,
   type BoardSlot,
   type Group,
+  type SharedMedia,
 } from '../../src/lib/groups';
+import type { Profile } from '../../src/lib/profiles';
 import { radii, spacing } from '../../src/theme/tokens';
 import { useTheme } from '../../src/theme/useTheme';
 
 type Tab = 'circles' | 'friends';
+
+type MediaItem = SharedMedia & { url: string | null };
+
+function SharedAudioButton({ url }: { url: string }) {
+  const t = useTheme();
+  const player = useAudioPlayer(url);
+  const status = useAudioPlayerStatus(player);
+
+  return (
+    <Pressable
+      onPress={() => (status.playing ? player.pause() : player.play())}
+      style={[styles.sharedMediaItem, { backgroundColor: status.playing ? t.accent : t.surface2 }]}
+    >
+      <Text style={{ color: status.playing ? '#fff' : t.ink, fontSize: 18 }}>
+        {status.playing ? '■' : '♪'}
+      </Text>
+      <Text style={{ color: status.playing ? '#fff' : t.inkMuted, fontSize: 11, fontWeight: '600' }}>
+        {status.playing ? 'Stop' : 'Play'}
+      </Text>
+    </Pressable>
+  );
+}
 
 export default function BoardScreen() {
   const t = useTheme();
@@ -36,6 +67,10 @@ export default function BoardScreen() {
   const [slots, setSlots] = useState<BoardSlot[]>([]);
   const [friends, setFriends] = useState<FriendSlot[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [selectedSlot, setSelectedSlot] = useState<{ profile: Profile; color: string | null } | null>(null);
+  const [sharedMedia, setSharedMedia] = useState<MediaItem[]>([]);
+  const [mediaLoading, setMediaLoading] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!userId) return;
@@ -74,6 +109,21 @@ export default function BoardScreen() {
     });
   }, [activeId, userId]);
 
+  const openSlot = async (slot: { profile: Profile; color: string | null }) => {
+    setSelectedSlot(slot);
+    setMediaLoading(true);
+    setSharedMedia([]);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const raw = await loadSharedMedia(slot.profile.id, today);
+      const withUrls = await Promise.all(
+        raw.map(async (m) => ({ ...m, url: await signedMediaUrl(m.storage_path) })),
+      );
+      setSharedMedia(withUrls);
+    } catch {}
+    setMediaLoading(false);
+  };
+
   if (loading) {
     return (
       <Screen title="Board">
@@ -90,6 +140,7 @@ export default function BoardScreen() {
       ? slots
       : friends.map((f) => ({ profile: f.profile, color: f.color }));
   const filled = shown.filter((s) => s.color).length;
+  const screenWidth = Dimensions.get('window').width;
 
   return (
     <Screen title="Board">
@@ -192,7 +243,7 @@ export default function BoardScreen() {
         {shown.length > 0 ? (
           <View style={styles.grid}>
             {shown.map((s) => (
-              <View key={s.profile.id} style={styles.slot}>
+              <Pressable key={s.profile.id} style={styles.slot} onPress={() => s.color && openSlot(s)}>
                 {s.color ? (
                   <Orb size={54} fills={[]} colorOverride={s.color} />
                 ) : (
@@ -208,17 +259,85 @@ export default function BoardScreen() {
                 >
                   {s.profile.id === userId ? 'You' : s.profile.display_name}
                 </Text>
-              </View>
+              </Pressable>
             ))}
           </View>
         ) : null}
 
         {shown.length > 0 ? (
           <Text style={[styles.footnote, { color: t.inkFaint }]}>
-            Only colors show here. Notes and media never leave your lane.
+            Tap an orb to see shared photos, videos, and voice notes.
           </Text>
         ) : null}
       </ScrollView>
+
+      <Modal visible={!!selectedSlot} transparent animationType="slide">
+        <View style={[styles.modalOverlay, { backgroundColor: t.paper + 'f5' }]}>
+          <View style={[styles.modalContent, { backgroundColor: t.surface, borderColor: t.line }]}>
+            <View style={styles.modalHeader}>
+              {selectedSlot ? (
+                <View style={styles.modalProfile}>
+                  <Avatar profile={selectedSlot.profile} size={32} />
+                  <Text style={[styles.modalName, { color: t.ink }]}>
+                    {selectedSlot.profile.id === userId ? 'You' : selectedSlot.profile.display_name}
+                  </Text>
+                </View>
+              ) : null}
+              <Pressable onPress={() => setSelectedSlot(null)}>
+                <Text style={[styles.modalCloseText, { color: t.accent }]}>Done</Text>
+              </Pressable>
+            </View>
+
+            {selectedSlot?.color ? (
+              <View style={styles.modalOrb}>
+                <Orb size={100} fills={[]} colorOverride={selectedSlot.color} />
+              </View>
+            ) : null}
+
+            {mediaLoading ? (
+              <ActivityIndicator color={t.accent} style={{ marginTop: spacing.md }} />
+            ) : sharedMedia.length === 0 ? (
+              <Text style={[styles.noMedia, { color: t.inkMuted }]}>
+                No media shared today.
+              </Text>
+            ) : (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.mediaScroll}
+              >
+                {sharedMedia.map((m) => {
+                  if (!m.url) return null;
+                  if (m.kind === 'photo') {
+                    return (
+                      <Image
+                        key={m.id}
+                        source={{ uri: m.url }}
+                        style={styles.sharedPhoto}
+                      />
+                    );
+                  }
+                  if (m.kind === 'audio') {
+                    return <SharedAudioButton key={m.id} url={m.url} />;
+                  }
+                  return (
+                    <Pressable
+                      key={m.id}
+                      onPress={() => m.url && Linking.openURL(m.url)}
+                      style={[styles.sharedMediaItem, { backgroundColor: t.surface2 }]}
+                    >
+                      <Text style={{ color: t.ink, fontSize: 20 }}>▶</Text>
+                      <Text style={{ color: t.inkMuted, fontSize: 11, fontWeight: '600' }}>
+                        Video
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
     </Screen>
   );
 }
@@ -282,4 +401,37 @@ const styles = StyleSheet.create({
   emptyCopy: { fontSize: 15, textAlign: 'center', maxWidth: 300, lineHeight: 22 },
   btn: { paddingVertical: 13, paddingHorizontal: 26, borderRadius: radii.pill },
   btnText: { fontSize: 15, fontWeight: '700' },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    padding: spacing.lg,
+    paddingBottom: spacing.xxl,
+    gap: spacing.md,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  modalProfile: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  modalName: { fontSize: 16, fontWeight: '700' },
+  modalCloseText: { fontSize: 15, fontWeight: '700' },
+  modalOrb: { alignItems: 'center' },
+  noMedia: { fontSize: 14, textAlign: 'center', paddingVertical: spacing.md },
+  mediaScroll: { gap: spacing.sm, paddingVertical: spacing.xs },
+  sharedPhoto: { width: 140, height: 140, borderRadius: radii.md },
+  sharedMediaItem: {
+    width: 100,
+    height: 140,
+    borderRadius: radii.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
 });

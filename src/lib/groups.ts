@@ -139,3 +139,48 @@ export async function unpublishColor(userId: string, day: string): Promise<void>
     .eq('day', day);
   if (error) throw error;
 }
+
+export type SharedMedia = {
+  id: string;
+  user_id: string;
+  day: string;
+  storage_path: string;
+  kind: 'photo' | 'audio' | 'video';
+};
+
+export async function publishMedia(
+  userId: string,
+  day: string,
+  media: { storage_path: string; kind: string }[],
+): Promise<void> {
+  if (media.length === 0) return;
+  const rows = media.map((m) => ({
+    user_id: userId,
+    day,
+    storage_path: m.storage_path,
+    kind: m.kind,
+  }));
+  const { error } = await supabase
+    .from('shared_media')
+    .upsert(rows, { onConflict: 'user_id,day,storage_path' });
+  if (error) throw error;
+}
+
+export async function unpublishMedia(userId: string, day: string): Promise<void> {
+  const { error } = await supabase
+    .from('shared_media')
+    .delete()
+    .eq('user_id', userId)
+    .eq('day', day);
+  if (error) throw error;
+}
+
+export async function loadSharedMedia(userId: string, day: string): Promise<SharedMedia[]> {
+  const { data, error } = await supabase
+    .from('shared_media')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('day', day);
+  if (error) return [];
+  return (data ?? []) as SharedMedia[];
+}

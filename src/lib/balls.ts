@@ -1,7 +1,7 @@
 import { File } from 'expo-file-system';
 import { blendEmotions, type EmotionFill } from './blend';
 import { todayKey as dayKey } from './dates';
-import { publishColor, unpublishColor } from './groups';
+import { publishColor, publishMedia, unpublishColor, unpublishMedia } from './groups';
 import { detectJourney, type JourneyReason } from './journey';
 import { supabase } from './supabase';
 
@@ -94,12 +94,7 @@ export async function saveBall(opts: {
 
   const ball = data as Ball;
 
-  if (opts.shareToBoard) {
-    await publishColor(opts.userId, day, ball.blended_color);
-  } else {
-    await unpublishColor(opts.userId, day);
-  }
-
+  const uploadedMedia: { storage_path: string; kind: string }[] = [];
   for (const m of opts.media ?? []) {
     const storagePath = await uploadMedia(opts.userId, ball.id, m);
     const { error: mediaError } = await supabase.from('ball_media').insert({
@@ -109,6 +104,20 @@ export async function saveBall(opts: {
       storage_path: storagePath,
     });
     if (mediaError) throw mediaError;
+    uploadedMedia.push({ storage_path: storagePath, kind: m.kind });
+  }
+
+  if (opts.shareToBoard) {
+    await publishColor(opts.userId, day, ball.blended_color);
+    const allMedia = await listMedia(ball.id);
+    await publishMedia(
+      opts.userId,
+      day,
+      allMedia.map((m) => ({ storage_path: m.storage_path, kind: m.kind })),
+    );
+  } else {
+    await unpublishColor(opts.userId, day);
+    await unpublishMedia(opts.userId, day);
   }
 
   return ball;
@@ -184,7 +193,14 @@ export async function setBoardShare(ball: Ball, shared: boolean) {
 
   if (shared) {
     await publishColor(ball.user_id, ball.day, ball.blended_color);
+    const media = await listMedia(ball.id);
+    await publishMedia(
+      ball.user_id,
+      ball.day,
+      media.map((m) => ({ storage_path: m.storage_path, kind: m.kind })),
+    );
   } else {
     await unpublishColor(ball.user_id, ball.day);
+    await unpublishMedia(ball.user_id, ball.day);
   }
 }
