@@ -6,8 +6,10 @@ import { EmotionPicker } from '../../src/components/EmotionPicker';
 import { Orb } from '../../src/components/Orb';
 import { Recaps } from '../../src/components/Recaps';
 import { Screen } from '../../src/components/Screen';
+import { StreakPlant, nextStage, stageFor } from '../../src/components/StreakPlant';
 import { useAuth } from '../../src/lib/auth';
 import { listBalls, todayKey, type Ball } from '../../src/lib/balls';
+import { currentStreak } from '../../src/lib/lane';
 import { refreshReminders } from '../../src/lib/reminders';
 import { useEmotionPool } from '../../src/lib/useEmotionPool';
 import { POOL_TOTAL, radii, spacing } from '../../src/theme/tokens';
@@ -57,6 +59,10 @@ export default function TodayScreen() {
   const empty = pool.used === 0;
   const showPicker = !existing || editing;
 
+  const streak = currentStreak(balls);
+  const { stage } = stageFor(streak);
+  const next = nextStage(streak);
+
   if (checked && !showPicker) {
     return (
       <Screen title="Today">
@@ -85,6 +91,23 @@ export default function TodayScreen() {
               </Pressable>
             </View>
           </View>
+
+          <View style={[styles.streakCard, { backgroundColor: t.surface, borderColor: t.line }]}>
+            <StreakPlant streak={streak} size={110} />
+            <View style={styles.streakInfo}>
+              <Text style={[styles.streakCount, { color: t.ink }]}>
+                {streak} day{streak !== 1 ? 's' : ''}
+              </Text>
+              {next ? (
+                <Text style={[styles.streakHint, { color: t.inkMuted }]}>
+                  {next.minDays - streak} more to {next.name.toLowerCase()}
+                </Text>
+              ) : (
+                <Text style={[styles.streakHint, { color: t.good }]}>Full tree!</Text>
+              )}
+            </View>
+          </View>
+
           <Recaps balls={balls} />
         </ScrollView>
       </Screen>
@@ -174,4 +197,15 @@ const styles = StyleSheet.create({
   doneTitle: { fontSize: 20, fontWeight: '700' },
   doneNote: { fontSize: 15, textAlign: 'center', maxWidth: 300, lineHeight: 22 },
   doneActions: { flexDirection: 'row', gap: spacing.sm },
+  streakCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: radii.md,
+    padding: spacing.md,
+    gap: spacing.md,
+  },
+  streakInfo: { flex: 1, gap: 2 },
+  streakCount: { fontSize: 18, fontWeight: '700' },
+  streakHint: { fontSize: 13 },
 });

@@ -111,6 +111,16 @@ export async function removeFriendByUser(userId: string, otherId: string) {
   if (error) throw error;
 }
 
+export async function pendingIncomingCount(userId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('friendships')
+    .select('id', { count: 'exact', head: true })
+    .eq('addressee_id', userId)
+    .eq('status', 'pending');
+  if (error) return 0;
+  return count ?? 0;
+}
+
 export async function loadFriendBoard(userId: string): Promise<FriendSlot[]> {
   const { friends } = await loadFriendships(userId);
   if (friends.length === 0) return [];

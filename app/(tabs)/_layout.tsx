@@ -1,9 +1,22 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
+import { Tabs, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { useAuth } from '../../src/lib/auth';
+import { pendingIncomingCount } from '../../src/lib/friends';
 import { useTheme } from '../../src/theme/useTheme';
 
 export default function TabsLayout() {
   const t = useTheme();
+  const { userId } = useAuth();
+  const [badge, setBadge] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!userId) return;
+      pendingIncomingCount(userId).then(setBadge).catch(() => {});
+    }, [userId]),
+  );
+
   return (
     <Tabs
       screenOptions={{
@@ -47,6 +60,7 @@ export default function TabsLayout() {
         name="board"
         options={{
           title: 'Board',
+          tabBarBadge: badge > 0 ? badge : undefined,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="people-outline" size={size} color={color} />
           ),
