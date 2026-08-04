@@ -3,8 +3,10 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import { useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { AuthProvider, useAuth } from '../src/lib/auth';
 import { isSupabaseConfigured } from '../src/lib/supabase';
 import { useTheme } from '../src/theme/useTheme';
@@ -57,13 +59,16 @@ function AuthGate() {
 }
 
 export default function RootLayout() {
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <AuthProvider>
-          <StatusBar style="auto" />
-          <AuthGate />
-        </AuthProvider>
+        <ErrorBoundary scheme={scheme}>
+          <AuthProvider>
+            <StatusBar style="auto" />
+            <AuthGate />
+          </AuthProvider>
+        </ErrorBoundary>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

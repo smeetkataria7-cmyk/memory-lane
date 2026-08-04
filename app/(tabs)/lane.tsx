@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { Orb } from '../../src/components/Orb';
+import { LoadError } from '../../src/components/LoadError';
 import { Screen } from '../../src/components/Screen';
 import { useAuth } from '../../src/lib/auth';
 import { listBalls, type Ball } from '../../src/lib/balls';
@@ -65,6 +66,8 @@ export default function LaneScreen() {
   const { userId } = useAuth();
   const [balls, setBalls] = useState<Ball[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
@@ -72,13 +75,17 @@ export default function LaneScreen() {
       if (!userId) return;
       setLoading(true);
       listBalls(userId)
-        .then((b) => alive && setBalls(b))
-        .catch(() => {})
+        .then((b) => {
+          if (!alive) return;
+          setBalls(b);
+          setLoadError(null);
+        })
+        .catch((e) => alive && setLoadError(e instanceof Error ? e.message : 'Check your connection and try again.'))
         .finally(() => alive && setLoading(false));
       return () => {
         alive = false;
       };
-    }, [userId]),
+    }, [userId, reloadKey]),
   );
 
   if (loading) {
@@ -87,6 +94,14 @@ export default function LaneScreen() {
         <View style={styles.center}>
           <ActivityIndicator color={t.accent} />
         </View>
+      </Screen>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <Screen title="Lane">
+        <LoadError message={loadError} onRetry={() => setReloadKey((k) => k + 1)} />
       </Screen>
     );
   }

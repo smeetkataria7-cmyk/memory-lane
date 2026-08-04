@@ -17,7 +17,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Orb } from '../src/components/Orb';
 import { SharePicker } from '../src/components/SharePicker';
 import { useAuth } from '../src/lib/auth';
-import { getBall, listBalls, saveBall, todayKey, type PendingMedia } from '../src/lib/balls';
+import {
+  deleteMedia,
+  getBall,
+  listBalls,
+  listMedia,
+  saveBall,
+  signedMediaUrl,
+  todayKey,
+  type BallMedia,
+  type PendingMedia,
+} from '../src/lib/balls';
 import { refreshWidgets } from '../src/lib/widgets';
 import { loadAudience, type ShareTarget } from '../src/lib/groups';
 import type { EmotionFill } from '../src/lib/blend';
@@ -38,6 +48,8 @@ export default function ComposeScreen() {
 
   const [note, setNote] = useState('');
   const [media, setMedia] = useState<PendingMedia[]>([]);
+  // Already uploaded for this day, as opposed to `media` which is pending.
+  const [saved, setSaved] = useState<(BallMedia & { url: string | null })[]>([]);
   const [shareWith, setShareWith] = useState<ShareTarget[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -54,10 +66,16 @@ export default function ComposeScreen() {
     let alive = true;
     const day = todayKey();
     Promise.all([getBall(userId, day), loadAudience(userId, day)])
-      .then(([ball, audience]) => {
+      .then(async ([ball, audience]) => {
         if (!alive) return;
         if (ball?.note) setNote(ball.note);
         setShareWith(audience);
+        if (!ball) return;
+        const rows = await listMedia(ball.id);
+        const withUrls = await Promise.all(
+          rows.map(async (r) => ({ ...r, url: await signedMediaUrl(r.storage_path) })),
+        );
+        if (alive) setSaved(withUrls);
       })
       .catch(() => {});
     return () => {
@@ -182,6 +200,40 @@ export default function ComposeScreen() {
           </Pressable>
         ) : null}
       </View>
+
+      {saved.length > 0 ? (
+        <View style={styles.thumbs}>
+          {saved.map((m) => (
+            <View key={m.id} style={styles.thumbWrap}>
+              {m.kind === 'photo' && m.url ? (
+                <Image source={{ uri: m.url }} style={styles.thumb} />
+              ) : (
+                <View style={[styles.thumb, styles.thumbAlt, { backgroundColor: t.surface2 }]}>
+                  <Text style={{ color: t.inkMuted, fontSize: 12, fontWeight: '700' }}>
+                    {m.kind === 'audio' ? '♪' : '▶'}
+                  </Text>
+                </View>
+              )}
+              <Pressable
+                onPress={async () => {
+                  if (!userId) return;
+                  const before = saved;
+                  setSaved((prev) => prev.filter((x) => x.id !== m.id));
+                  try {
+                    await deleteMedia(m, userId, todayKey());
+                  } catch {
+                    setSaved(before);
+                    setError('Could not remove that. Try again.');
+                  }
+                }}
+                style={[styles.remove, { backgroundColor: t.ink }]}
+              >
+                <Text style={{ color: t.paper, fontSize: 11, fontWeight: '700' }}>✕</Text>
+              </Pressable>
+            </View>
+          ))}
+        </View>
+      ) : null}
 
       {media.length > 0 ? (
         <View style={styles.thumbs}>

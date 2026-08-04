@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { Avatar } from '../../src/components/Avatar';
 import { Orb } from '../../src/components/Orb';
+import { LoadError } from '../../src/components/LoadError';
 import { Screen } from '../../src/components/Screen';
 import { useAuth } from '../../src/lib/auth';
 import { signedMediaUrl } from '../../src/lib/balls';
@@ -68,6 +69,7 @@ export default function BoardScreen() {
   const [slots, setSlots] = useState<BoardSlot[]>([]);
   const [friends, setFriends] = useState<FriendSlot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [selectedSlot, setSelectedSlot] = useState<{ profile: Profile; color: string | null } | null>(null);
   const [sharedMedia, setSharedMedia] = useState<MediaItem[]>([]);
@@ -87,7 +89,13 @@ export default function BoardScreen() {
       let alive = true;
       setLoading(true);
       refresh()
-        .catch(() => {})
+        .then(() => alive && setLoadError(null))
+        .catch((e) =>
+          alive &&
+          setLoadError(
+            e instanceof Error ? e.message : 'Check your connection and try again.',
+          ),
+        )
         .finally(() => alive && setLoading(false));
       return () => {
         alive = false;
@@ -131,6 +139,23 @@ export default function BoardScreen() {
         <View style={styles.center}>
           <ActivityIndicator color={t.accent} />
         </View>
+      </Screen>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <Screen title="Board">
+        <LoadError
+          message={loadError}
+          onRetry={() => {
+            setLoading(true);
+            refresh()
+              .then(() => setLoadError(null))
+              .catch(() => {})
+              .finally(() => setLoading(false));
+          }}
+        />
       </Screen>
     );
   }

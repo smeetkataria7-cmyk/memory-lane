@@ -93,7 +93,13 @@ export async function setReminder(
 ): Promise<boolean> {
   if (enabled) {
     const granted = await requestReminderPermission();
-    if (!granted) return false;
+    if (!granted) {
+      // Record that reminders are off before giving up, so the stored state
+      // matches what will actually happen rather than what was asked for.
+      await AsyncStorage.setItem(ENABLED_KEY, 'false');
+      await AsyncStorage.setItem(TIME_KEY, JSON.stringify(time));
+      return false;
+    }
     await scheduleWindow(time, filledToday);
   } else {
     await Notifications.cancelAllScheduledNotificationsAsync();

@@ -18,43 +18,49 @@ export function EmotionPicker({ weights, onHoldStart, onHoldEnd, onClearOne }: P
         const w = weights[e.key];
         const pct = Math.round(w);
         return (
-          <Pressable
+          // The clear button is a sibling of the hold area, not a child of
+          // it. Nested inside, Android would sometimes hand the touch to the
+          // outer Pressable first, so tapping "clear" added weight instead.
+          <View
             key={e.key}
-            onPressIn={() => onHoldStart(e.key)}
-            onPressOut={onHoldEnd}
-            onLongPress={undefined}
-            delayLongPress={100000}
-            style={({ pressed }) => [
+            style={[
               styles.chip,
-              {
-                backgroundColor: t.surface,
-                borderColor: w > 0 ? e.color : t.line,
-                transform: [{ scale: pressed ? 1.06 : 1 }],
-              },
+              { backgroundColor: t.surface, borderColor: w > 0 ? e.color : t.line },
             ]}
           >
             <View
               style={[
                 styles.fill,
-                {
-                  backgroundColor: e.color,
-                  opacity: 0.22,
-                  width: `${pct}%`,
-                },
+                { backgroundColor: e.color, opacity: 0.22, width: `${pct}%` },
               ]}
             />
-            <View style={[styles.dot, { backgroundColor: e.color }]} />
-            <Text style={[styles.label, { color: t.ink }]} numberOfLines={1}>
-              {e.label}
-            </Text>
+            <Pressable
+              onPressIn={() => onHoldStart(e.key)}
+              onPressOut={onHoldEnd}
+              delayLongPress={100000}
+              style={({ pressed }) => [
+                styles.hold,
+                { transform: [{ scale: pressed ? 1.06 : 1 }] },
+              ]}
+            >
+              <View style={[styles.dot, { backgroundColor: e.color }]} />
+              <Text style={[styles.label, { color: t.ink }]} numberOfLines={1}>
+                {e.label}
+              </Text>
+            </Pressable>
             {w > 0 ? (
-              <Pressable hitSlop={8} onPress={() => onClearOne(e.key)}>
-                <Text style={[styles.pct, { color: t.inkMuted }]}>{pct}% ✕</Text>
+              <Pressable
+                hitSlop={10}
+                onPress={() => onClearOne(e.key)}
+                style={styles.clear}
+              >
+                <Text style={[styles.pct, { color: t.inkMuted }]}>{pct}%</Text>
+                <Text style={[styles.clearGlyph, { color: t.inkFaint }]}>✕</Text>
               </Pressable>
             ) : (
               <Text style={[styles.pct, { color: t.inkFaint }]}>hold</Text>
             )}
-          </Pressable>
+          </View>
         );
       })}
     </View>
@@ -78,6 +84,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     overflow: 'hidden',
   },
+  hold: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  clear: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  clearGlyph: { fontSize: 12, fontWeight: '700' },
   fill: {
     position: 'absolute',
     left: 0,

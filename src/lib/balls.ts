@@ -64,6 +64,17 @@ async function uploadMedia(userId: string, ballId: string, media: PendingMedia) 
   return path;
 }
 
+// Best effort: if the cleanup itself fails there is nothing useful left to
+// tell the user, and the original error is the one worth surfacing.
+async function discardUploads(paths: string[]) {
+  if (paths.length === 0) return;
+  try {
+    await supabase.storage.from('ball-media').remove(paths);
+  } catch {
+    // ignored on purpose
+  }
+}
+
 export async function saveBall(opts: {
   userId: string;
   fills: EmotionFill[];
@@ -103,17 +114,37 @@ export async function saveBall(opts: {
 
   const ball = data as Ball;
 
-  const uploadedMedia: { storage_path: string; kind: string }[] = [];
-  for (const m of opts.media ?? []) {
-    const storagePath = await uploadMedia(opts.userId, ball.id, m);
-    const { error: mediaError } = await supabase.from('ball_media').insert({
-      ball_id: ball.id,
-      user_id: opts.userId,
-      kind: m.kind,
-      storage_path: storagePath,
-    });
-    if (mediaError) throw mediaError;
-    uploadedMedia.push({ storage_path: storagePath, kind: m.kind });
+  // Upload everything before recording any of it. A failure halfway used to
+  // leave files in the bucket that no row pointed at, and a day that was
+  // half-saved; now a failed save leaves the bucket as it found it.
+  const pending = opts.media ?? [];
+  const uploaded: { storage_path: string; kind: MediaKind }[] = [];
+  try {
+    for (const m of pending) {
+      const storagePath = await uploadMedia(opts.userId, ball.id, m);
+      uploaded.push({ storage_path: storagePath, kind: m.kind });
+    }
+  } catch (e) {
+    await discardUploads(uploaded.map((u) => u.storage_path));
+    throw new Error(
+      'Your day was saved, but the photos and audio could not be uploaded. Check your connection and add them again.',
+      { cause: e },
+    );
+  }
+
+  if (uploaded.length > 0) {
+    const { error: mediaError } = await supabase.from('ball_media').insert(
+      uploaded.map((u) => ({
+        ball_id: ball.id,
+        user_id: opts.userId,
+        kind: u.kind,
+        storage_path: u.storage_path,
+      })),
+    );
+    if (mediaError) {
+      await discardUploads(uploaded.map((u) => u.storage_path));
+      throw mediaError;
+    }
   }
 
   if (shared) {
@@ -173,6 +204,24 @@ export async function listMedia(ballId: string): Promise<BallMedia[]> {
     .eq('ball_id', ballId);
   if (error) throw error;
   return (data ?? []) as BallMedia[];
+}
+
+// Removes the row and the file behind it. The row goes first: an orphaned
+// file is invisible, whereas a row pointing at a deleted file renders as a
+// broken tile.
+export async function deleteMedia(item: BallMedia, userId: string, day: string) {
+  const { error } = await supabase.from('ball_media').delete().eq('id', item.id);
+  if (error) throw error;
+
+  await supabase.storage.from('ball-media').remove([item.storage_path]);
+
+  // Whatever was published for this day must stop pointing at it too.
+  await supabase
+    .from('shared_media')
+    .delete()
+    .eq('user_id', userId)
+    .eq('day', day)
+    .eq('storage_path', item.storage_path);
 }
 
 export async function signedMediaUrl(path: string): Promise<string | null> {

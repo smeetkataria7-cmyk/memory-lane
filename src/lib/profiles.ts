@@ -52,13 +52,17 @@ export async function uploadAvatar(userId: string, uri: string): Promise<string>
   return url;
 }
 
+// % and _ are wildcards to ilike, so a search for "%" would otherwise match
+// every person on the app rather than the nobody it should.
+const escapeLike = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
+
 export async function searchProfiles(term: string, excludeId: string): Promise<Profile[]> {
   const q = term.trim();
   if (q.length < 2) return [];
   const { data, error } = await supabase
     .from('profiles')
     .select('id, display_name, avatar_url')
-    .ilike('display_name', `%${q}%`)
+    .ilike('display_name', `%${escapeLike(q)}%`)
     .neq('id', excludeId)
     .limit(20);
   if (error) throw error;
