@@ -9,7 +9,7 @@ import { Screen } from '../../src/components/Screen';
 import { MemoryTree, nextStage } from '../../src/components/MemoryTree';
 import { useAuth } from '../../src/lib/auth';
 import { listBalls, todayKey, type Ball } from '../../src/lib/balls';
-import { currentStreak } from '../../src/lib/lane';
+import { currentStreak, formatDay } from '../../src/lib/lane';
 import { refreshReminders } from '../../src/lib/reminders';
 import { refreshWidgets } from '../../src/lib/widgets';
 import { useEmotionPool } from '../../src/lib/useEmotionPool';
@@ -59,6 +59,7 @@ export default function TodayScreen() {
   };
 
   const empty = pool.used === 0;
+  const full = pool.used >= POOL_TOTAL - 0.5;
   const showPicker = !existing || editing;
 
   const streak = currentStreak(balls);
@@ -68,7 +69,7 @@ export default function TodayScreen() {
 
   if (checked && !showPicker) {
     return (
-      <Screen title="Today">
+      <Screen title="Today" subtitle={formatDay(todayKey())}>
         <ScrollView
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
@@ -130,16 +131,25 @@ export default function TodayScreen() {
               Hold an emotion below to start filling today's orb.
             </Text>
           ) : (
-            <View style={[styles.meter, { backgroundColor: t.surface2 }]}>
-              <View
-                style={[
-                  styles.meterFill,
-                  {
-                    backgroundColor: t.accent,
-                    width: `${Math.min(100, (pool.used / POOL_TOTAL) * 100)}%`,
-                  },
-                ]}
-              />
+            <View style={styles.meterWrap}>
+              <View style={[styles.meter, { backgroundColor: t.surface2 }]}>
+                <View
+                  style={[
+                    styles.meterFill,
+                    {
+                      backgroundColor: full ? t.good : t.accent,
+                      width: `${Math.min(100, (pool.used / POOL_TOTAL) * 100)}%`,
+                    },
+                  ]}
+                />
+              </View>
+              {/* A bare bar does not say how much of the day is left to
+                  account for, which is the whole point of a shared pool. */}
+              <Text style={[styles.meterLabel, { color: full ? t.good : t.inkMuted }]}>
+                {full
+                  ? 'The whole day is accounted for'
+                  : `${Math.round(POOL_TOTAL - pool.used)}% of the day left to place`}
+              </Text>
             </View>
           )}
         </View>
@@ -190,8 +200,10 @@ const styles = StyleSheet.create({
   scroll: { paddingBottom: spacing.xl, gap: spacing.lg },
   orbWrap: { alignItems: 'center', gap: spacing.md, paddingTop: spacing.sm },
   hint: { fontSize: 14, textAlign: 'center', maxWidth: 260 },
+  meterWrap: { alignItems: 'center', gap: 6 },
   meter: { width: 180, height: 6, borderRadius: radii.pill, overflow: 'hidden' },
   meterFill: { height: '100%', borderRadius: radii.pill },
+  meterLabel: { fontSize: 12, fontWeight: '600' },
   actions: { flexDirection: 'row', justifyContent: 'center', gap: spacing.sm },
   btn: { paddingVertical: 12, paddingHorizontal: 24, borderRadius: radii.pill },
   btnPrimary: { minWidth: 140, alignItems: 'center' },

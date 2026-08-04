@@ -141,7 +141,14 @@ export default function BoardScreen() {
   const filled = shown.filter((s) => s.color).length;
 
   return (
-    <Screen title="Board">
+    <Screen
+      title="Board"
+      subtitle={
+        shown.length > 0
+          ? `${filled} of ${shown.length} shared today`
+          : undefined
+      }
+    >
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         <View style={[styles.segment, { backgroundColor: t.surface2 }]}>
           {(['circles', 'friends'] as Tab[]).map((k) => (
@@ -210,7 +217,7 @@ export default function BoardScreen() {
               {active ? (
                 <View style={styles.headRow}>
                   <Text style={[styles.sub, { color: t.inkMuted }]}>
-                    {filled} of {shown.length} shared today
+                    Invite code
                   </Text>
                   <View style={[styles.codePill, { backgroundColor: t.surface2 }]}>
                     <Text style={[styles.codeText, { color: t.inkMuted }]}>
@@ -230,7 +237,7 @@ export default function BoardScreen() {
         ) : (
           <View style={styles.headRow}>
             <Text style={[styles.sub, { color: t.inkMuted }]}>
-              {filled} of {shown.length} shared today
+              {friends.length} {friends.length === 1 ? 'friend' : 'friends'}
             </Text>
             <Pressable onPress={() => router.push('/friends')}>
               <Text style={[styles.link, { color: t.accent }]}>Manage ›</Text>

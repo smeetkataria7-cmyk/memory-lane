@@ -63,7 +63,10 @@ export default function JourneyScreen() {
   }
 
   return (
-    <Screen title="Journey">
+    <Screen
+      title="Journey"
+      subtitle={`${balls.length} ${balls.length === 1 ? 'day' : 'days'} kept`}
+    >
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         <SpiralPage>
           {balls.map((b, i) => (

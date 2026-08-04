@@ -93,7 +93,10 @@ export default function LaneScreen() {
   const lit = balls.length;
 
   return (
-    <Screen title="Lane">
+    <Screen
+      title="Lane"
+      subtitle={`${lit} ${lit === 1 ? 'memory' : 'memories'} on the shelves`}
+    >
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scroll}
@@ -142,7 +145,7 @@ export default function LaneScreen() {
         </LinearGradient>
 
         <Text style={[styles.footnote, { color: t.inkFaint }]}>
-          {lit} {lit === 1 ? 'memory' : 'memories'} on the shelves. Tap one to open it.
+          Tap an orb to open that day. Scroll down for earlier months.
         </Text>
       </ScrollView>
     </Screen>
