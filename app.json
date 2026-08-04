@@ -54,6 +54,35 @@
         {
           "microphonePermission": "Memory Lane uses your microphone so you can leave a voice note on a day."
         }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "MemoryTree",
+              "label": "Memory tree",
+              "description": "Your streak, leafed in the colours of your days.",
+              "minWidth": "140dp",
+              "minHeight": "140dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "TodayOrb",
+              "label": "Today's orb",
+              "description": "Today's memory orb, or a nudge to fill it in.",
+              "minWidth": "140dp",
+              "minHeight": "140dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
       ]
     ]
   }

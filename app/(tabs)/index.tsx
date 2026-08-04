@@ -11,6 +11,7 @@ import { useAuth } from '../../src/lib/auth';
 import { listBalls, todayKey, type Ball } from '../../src/lib/balls';
 import { currentStreak } from '../../src/lib/lane';
 import { refreshReminders } from '../../src/lib/reminders';
+import { refreshWidgets } from '../../src/lib/widgets';
 import { useEmotionPool } from '../../src/lib/useEmotionPool';
 import { POOL_TOTAL, radii, spacing } from '../../src/theme/tokens';
 import { useTheme } from '../../src/theme/useTheme';
@@ -41,6 +42,7 @@ export default function TodayScreen() {
           setExisting(today);
           setChecked(true);
           refreshReminders(today !== null).catch(() => {});
+          refreshWidgets(all).catch(() => {});
         })
         .catch(() => alive && setChecked(true));
       return () => {

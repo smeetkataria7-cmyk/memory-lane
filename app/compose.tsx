@@ -17,7 +17,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Orb } from '../src/components/Orb';
 import { SharePicker } from '../src/components/SharePicker';
 import { useAuth } from '../src/lib/auth';
-import { saveBall, type PendingMedia } from '../src/lib/balls';
+import { listBalls, saveBall, type PendingMedia } from '../src/lib/balls';
+import { refreshWidgets } from '../src/lib/widgets';
 import type { ShareTarget } from '../src/lib/groups';
 import type { EmotionFill } from '../src/lib/blend';
 import { detectJourney, journeyReasonLabel } from '../src/lib/journey';
@@ -89,6 +90,7 @@ export default function ComposeScreen() {
       await saveBall({ userId, fills, note, media, shareWith });
       // Today is done - drop tonight's nudge, keep the rest of the window.
       await refreshReminders(true).catch(() => {});
+      await listBalls(userId).then(refreshWidgets).catch(() => {});
       router.replace('/lane');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save today.');
