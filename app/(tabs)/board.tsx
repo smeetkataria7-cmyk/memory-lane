@@ -3,7 +3,6 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
   Image,
   Linking,
   Modal,
@@ -18,6 +17,7 @@ import { Orb } from '../../src/components/Orb';
 import { Screen } from '../../src/components/Screen';
 import { useAuth } from '../../src/lib/auth';
 import { signedMediaUrl } from '../../src/lib/balls';
+import { todayKey } from '../../src/lib/dates';
 import { loadFriendBoard, type FriendSlot } from '../../src/lib/friends';
 import {
   loadBoard,
@@ -114,8 +114,7 @@ export default function BoardScreen() {
     setMediaLoading(true);
     setSharedMedia([]);
     try {
-      const today = new Date().toISOString().split('T')[0];
-      const raw = await loadSharedMedia(slot.profile.id, today);
+      const raw = await loadSharedMedia(slot.profile.id, todayKey());
       const withUrls = await Promise.all(
         raw.map(async (m) => ({ ...m, url: await signedMediaUrl(m.storage_path) })),
       );
@@ -140,7 +139,6 @@ export default function BoardScreen() {
       ? slots
       : friends.map((f) => ({ profile: f.profile, color: f.color }));
   const filled = shown.filter((s) => s.color).length;
-  const screenWidth = Dimensions.get('window').width;
 
   return (
     <Screen title="Board">

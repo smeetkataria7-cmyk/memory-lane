@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import Svg, { Circle as SvgCircle, Line } from 'react-native-svg';
+import Svg, { Circle as SvgCircle } from 'react-native-svg';
 import { Orb } from '../../src/components/Orb';
 import { Screen } from '../../src/components/Screen';
 import { useAuth } from '../../src/lib/auth';

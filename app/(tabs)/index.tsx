@@ -6,7 +6,7 @@ import { EmotionPicker } from '../../src/components/EmotionPicker';
 import { Orb } from '../../src/components/Orb';
 import { Recaps } from '../../src/components/Recaps';
 import { Screen } from '../../src/components/Screen';
-import { StreakPlant, nextStage, stageFor } from '../../src/components/StreakPlant';
+import { StreakPlant, nextStage } from '../../src/components/StreakPlant';
 import { useAuth } from '../../src/lib/auth';
 import { listBalls, todayKey, type Ball } from '../../src/lib/balls';
 import { currentStreak } from '../../src/lib/lane';
@@ -60,7 +60,6 @@ export default function TodayScreen() {
   const showPicker = !existing || editing;
 
   const streak = currentStreak(balls);
-  const { stage } = stageFor(streak);
   const next = nextStage(streak);
 
   if (checked && !showPicker) {

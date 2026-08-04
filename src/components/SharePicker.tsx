@@ -11,7 +11,7 @@ import {
 import { loadFriendships } from '../lib/friends';
 import { myGroups, type Group, type ShareTarget } from '../lib/groups';
 import type { Profile } from '../lib/profiles';
-import { radii, spacing } from '../theme/tokens';
+import { spacing } from '../theme/tokens';
 import { useTheme } from '../theme/useTheme';
 import { Avatar } from './Avatar';
 

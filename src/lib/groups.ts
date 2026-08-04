@@ -13,16 +13,6 @@ export type BoardSlot = {
   color: string | null; // null = hasn't shared today yet
 };
 
-const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-
-function makeCode(len = 6): string {
-  let out = '';
-  for (let i = 0; i < len; i += 1) {
-    out += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
-  }
-  return out;
-}
-
 const one = <T,>(v: T | T[]): T => (Array.isArray(v) ? v[0] : v);
 
 export async function myGroups(userId: string): Promise<Group[]> {
@@ -37,19 +27,15 @@ export async function myGroups(userId: string): Promise<Group[]> {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export async function createGroup(userId: string, name: string): Promise<Group> {
-  const { data, error } = await supabase
-    .from('groups')
-    .insert({ name: name.trim(), invite_code: makeCode(), created_by: userId })
-    .select('id, name, invite_code')
-    .single();
+// Creating the group and joining it have to happen together: the groups
+// read policy is membership-based, so a group with no members is invisible
+// even to the person who made it.
+export async function createGroup(name: string): Promise<Group> {
+  const { data, error } = await supabase.rpc('create_group_with_name', {
+    group_name: name.trim(),
+  });
   if (error) throw error;
-  const group = data as Group;
-  const { error: joinError } = await supabase
-    .from('group_members')
-    .insert({ group_id: group.id, user_id: userId });
-  if (joinError) throw joinError;
-  return group;
+  return data as Group;
 }
 
 export async function joinGroup(code: string): Promise<string> {

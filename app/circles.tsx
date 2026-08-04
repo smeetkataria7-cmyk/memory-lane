@@ -77,8 +77,8 @@ export default function CirclesScreen() {
       </Pressable>
       <Text style={[styles.title, { color: t.ink }]}>Circles</Text>
       <Text style={[styles.lead, { color: t.inkMuted }]}>
-        A circle is a closed group of up to 20. You can be in as many as you like — your
-        color goes to all of them when you share a day.
+        A circle is a closed group of up to 20. You can be in as many as you like, and
+        you pick which ones a day goes to each time you share.
       </Text>
 
       {loading ? (
@@ -128,7 +128,7 @@ export default function CirclesScreen() {
         />
         <Pressable
           disabled={busy || !name.trim() || !userId}
-          onPress={() => run(() => createGroup(userId!, name), () => setName(''))}
+          onPress={() => run(() => createGroup(name), () => setName(''))}
           style={[styles.btn, { backgroundColor: !name.trim() ? t.surface2 : t.accent }]}
         >
           <Text style={[styles.btnText, { color: !name.trim() ? t.inkFaint : '#fff' }]}>
