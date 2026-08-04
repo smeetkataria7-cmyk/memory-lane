@@ -86,8 +86,8 @@ export const Orb = memo(function Orb({ fills, size, colorOverride, glow }: Props
             <Stop offset="100%" stopColor="#000" stopOpacity={0} />
           </RadialGradient>
           <RadialGradient id="topLight" cx="30%" cy="22%" r="55%">
-            <Stop offset="0%" stopColor="#fff" stopOpacity={0.55} />
-            <Stop offset="60%" stopColor="#fff" stopOpacity={0.1} />
+            <Stop offset="0%" stopColor="#fff" stopOpacity={glow ? 0.3 : 0.55} />
+            <Stop offset="60%" stopColor="#fff" stopOpacity={glow ? 0.06 : 0.1} />
             <Stop offset="100%" stopColor="#fff" stopOpacity={0} />
           </RadialGradient>
           <RadialGradient id="bounce" cx="50%" cy="50%" r="50%">
@@ -122,16 +122,20 @@ export const Orb = memo(function Orb({ fills, size, colorOverride, glow }: Props
           <Circle cx="50" cy="50" r="50" fill="url(#coreShadow)" />
           <Circle cx="50" cy="50" r="50" fill="url(#topLight)" />
           <Ellipse cx="50" cy="90" rx="30" ry="8" fill="url(#bounce)" />
+          {/* On the shelves the orb is small and lit from within, so a full
+              specular reads as white plastic. Keep a hint of it instead. */}
           <Ellipse
             cx="33"
             cy="24"
-            rx="14"
-            ry="7"
+            rx={glow ? 10 : 14}
+            ry={glow ? 5 : 7}
             fill="#fff"
-            opacity={0.9}
+            opacity={glow ? 0.55 : 0.9}
             transform="rotate(-28 33 24)"
           />
-          <Ellipse cx="50" cy="32" rx="4" ry="2.4" fill="#fff" opacity={0.55} />
+          {glow ? null : (
+            <Ellipse cx="50" cy="32" rx="4" ry="2.4" fill="#fff" opacity={0.55} />
+          )}
         </G>
       </Svg>
     </View>

@@ -4,6 +4,9 @@ export type LaneCell = {
   day: string;
   dayOfMonth: number;
   ball: Ball | null;
+  // Days that haven't happened yet still get a socket, so a month reads as
+  // a full shelf with room left on it rather than a row that stops midway.
+  future: boolean;
 };
 
 export type LaneMonth = {
@@ -13,31 +16,44 @@ export type LaneMonth = {
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-// Every day from the first entry to today gets a cell, so missed days
-// stay visible as blanks instead of quietly collapsing.
+// Whole calendar months, from the month of the first entry through the
+// current one. Every day gets a cell - missed days stay visible as blanks
+// instead of quietly collapsing, and a month is always a complete shelf.
 export function buildLane(balls: Ball[]): LaneMonth[] {
   if (balls.length === 0) return [];
   const byDay = new Map(balls.map((b) => [b.day, b]));
   const days = balls.map((b) => b.day).sort();
   const first = new Date(`${days[0]}T00:00:00`);
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const todayKey = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
 
-  const months = new Map<string, LaneCell[]>();
-  for (const d = new Date(first); d <= today; d.setDate(d.getDate() + 1)) {
-    const key = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
-    const day = `${key}-${pad(d.getDate())}`;
-    if (!months.has(key)) months.set(key, []);
-    months.get(key)!.push({
-      day,
-      dayOfMonth: d.getDate(),
-      ball: byDay.get(day) ?? null,
-    });
+  const months: LaneMonth[] = [];
+  const cursor = new Date(first.getFullYear(), first.getMonth(), 1);
+  const last = new Date(today.getFullYear(), today.getMonth(), 1);
+
+  while (cursor <= last) {
+    const year = cursor.getFullYear();
+    const month = cursor.getMonth();
+    const key = `${year}-${pad(month + 1)}`;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const cells: LaneCell[] = [];
+    for (let dom = 1; dom <= daysInMonth; dom += 1) {
+      const day = `${key}-${pad(dom)}`;
+      cells.push({
+        day,
+        dayOfMonth: dom,
+        ball: byDay.get(day) ?? null,
+        future: day > todayKey,
+      });
+    }
+    months.push({ key, cells });
+    cursor.setMonth(cursor.getMonth() + 1);
   }
 
-  return [...months.entries()]
-    .map(([key, cells]) => ({ key, cells }))
-    .sort((a, b) => b.key.localeCompare(a.key));
+  return months.reverse();
 }
 
 const MONTH_NAMES = [

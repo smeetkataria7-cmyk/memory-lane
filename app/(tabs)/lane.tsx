@@ -1,8 +1,8 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -20,15 +20,19 @@ import { useTheme } from '../../src/theme/useTheme';
 // The vault is deliberately dark in both themes: a lit orb only reads as lit
 // against something darker than it is. This is the one screen that opts out
 // of the paper palette.
-const VAULT = '#15131f';
-const VAULT_EDGE = '#231f33';
-const SHELF = '#2f2a45';
-const SHELF_LIP = '#443c63';
-const VAULT_INK = '#cfc9e6';
-const VAULT_INK_FAINT = '#6d6689';
+const VAULT_TOP = '#191527';
+const VAULT_BOTTOM = '#0e0c16';
+const VAULT_EDGE = '#282243';
+const UPRIGHT = '#231d3a';
+const UPRIGHT_LIT = '#3a3159';
+const SHELF = '#2a2440';
+const SHELF_LIP = '#4a4070';
+const VAULT_INK = '#d6d0ec';
+const VAULT_INK_FAINT = '#615a7d';
 
-const CELL = 48;
-const ORB = 46;
+// Seven to a shelf, so a row is a week and every shelf is full.
+const PER_SHELF = 7;
+const ORB = 40;
 
 export default function LaneScreen() {
   const t = useTheme();
@@ -75,33 +79,59 @@ export default function LaneScreen() {
   }
 
   const months = buildLane(balls);
-  const width = Dimensions.get('window').width;
-  // Screen padding, then the vault's own inset, then whatever whole cells fit.
-  const usable = width - spacing.md * 2 - spacing.md * 2;
-  const perRow = Math.max(4, Math.floor(usable / CELL));
+  const lit = balls.length;
 
   return (
     <Screen title="Lane">
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        <View style={styles.vault}>
-          {months.map((m) => (
-            <View key={m.key} style={styles.rack}>
-              <Text style={styles.rackLabel}>{monthLabel(m.key)}</Text>
-              {chunk(m.cells, perRow).map((row, i) => (
-                <Shelf
-                  key={`${m.key}-${i}`}
-                  cells={row}
-                  perRow={perRow}
-                  onOpen={(day) =>
-                    router.push({ pathname: '/ball/[day]', params: { day } })
-                  }
-                />
-              ))}
-            </View>
-          ))}
-        </View>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scroll}
+      >
+        <LinearGradient
+          colors={[VAULT_TOP, VAULT_BOTTOM]}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={styles.vault}
+        >
+          {/* Uprights the shelves appear to be fixed to, lit from the inside. */}
+          <LinearGradient
+            colors={[UPRIGHT_LIT, UPRIGHT]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[styles.upright, styles.uprightLeft]}
+          />
+          <LinearGradient
+            colors={[UPRIGHT, UPRIGHT_LIT]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[styles.upright, styles.uprightRight]}
+          />
+
+          <View style={styles.racks}>
+            {months.map((m) => (
+              <View key={m.key} style={styles.rack}>
+                <View style={styles.rackHead}>
+                  <Text style={styles.rackLabel}>{monthLabel(m.key)}</Text>
+                  <Text style={styles.rackCount}>
+                    {m.cells.filter((c) => c.ball).length}/{m.cells.length}
+                  </Text>
+                </View>
+                {chunk(m.cells, PER_SHELF).map((row, i) => (
+                  <Shelf
+                    key={`${m.key}-${i}`}
+                    cells={row}
+                    onOpen={(day) =>
+                      router.push({ pathname: '/ball/[day]', params: { day } })
+                    }
+                  />
+                ))}
+              </View>
+            ))}
+          </View>
+        </LinearGradient>
+
         <Text style={[styles.footnote, { color: t.inkFaint }]}>
-          Every orb is a day you filled in. Tap one to open it.
+          {lit} {lit === 1 ? 'memory' : 'memories'} on the shelves. Tap one to open it.
         </Text>
       </ScrollView>
     </Screen>
@@ -116,11 +146,9 @@ function chunk<T>(items: T[], size: number): T[][] {
 
 function Shelf({
   cells,
-  perRow,
   onOpen,
 }: {
   cells: LaneCell[];
-  perRow: number;
   onOpen: (day: string) => void;
 }) {
   return (
@@ -129,8 +157,8 @@ function Shelf({
         {cells.map((cell) => (
           <Socket key={cell.day} cell={cell} onOpen={onOpen} />
         ))}
-        {/* Keep the last shelf of a month the same width as the others. */}
-        {Array.from({ length: perRow - cells.length }, (_, i) => (
+        {/* A short final week still spans the shelf. */}
+        {Array.from({ length: PER_SHELF - cells.length }, (_, i) => (
           <View key={`pad-${i}`} style={styles.cell} />
         ))}
       </View>
@@ -150,8 +178,10 @@ function Socket({
   if (!cell.ball) {
     return (
       <View style={styles.cell}>
-        <View style={styles.emptySocket} />
-        <Text style={styles.dayNum}>{cell.dayOfMonth}</Text>
+        <View style={[styles.socket, cell.future && styles.socketFuture]} />
+        <Text style={[styles.dayNum, cell.future && styles.dayNumFuture]}>
+          {cell.dayOfMonth}
+        </Text>
       </View>
     );
   }
@@ -173,56 +203,73 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   empty: { fontSize: 15, textAlign: 'center', maxWidth: 280, lineHeight: 22 },
-  scroll: { paddingBottom: spacing.xl, gap: spacing.sm },
+  // flexGrow lets the vault fill the screen when there is little to show,
+  // so it reads as a room rather than a card floating in space.
+  scroll: { flexGrow: 1, paddingBottom: spacing.lg },
   vault: {
-    backgroundColor: VAULT,
+    flex: 1,
     borderColor: VAULT_EDGE,
     borderWidth: 1,
     borderRadius: radii.md,
-    padding: spacing.md,
-    gap: spacing.lg,
+    overflow: 'hidden',
+    paddingVertical: spacing.md,
   },
-  rack: { gap: spacing.xs },
+  upright: { position: 'absolute', top: 0, bottom: 0, width: 10 },
+  uprightLeft: { left: 0 },
+  uprightRight: { right: 0 },
+  racks: { paddingHorizontal: 14, gap: spacing.lg },
+  rack: { gap: 2 },
+  rackHead: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
   rackLabel: {
     color: VAULT_INK,
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    marginBottom: 2,
+    letterSpacing: 1.4,
+  },
+  rackCount: {
+    color: VAULT_INK_FAINT,
+    fontSize: 11,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
   },
   shelf: { marginBottom: spacing.sm },
   shelfRow: { flexDirection: 'row', alignItems: 'flex-end' },
   cell: {
-    width: CELL,
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'flex-end',
     position: 'relative',
   },
-  emptySocket: {
-    width: ORB * 0.5,
-    height: ORB * 0.5,
-    marginVertical: ORB * 0.25,
+  socket: {
+    width: ORB * 0.42,
+    height: ORB * 0.42,
+    marginVertical: ORB * 0.29,
     borderRadius: ORB,
     borderWidth: 1,
     borderColor: VAULT_INK_FAINT,
-    opacity: 0.35,
+    opacity: 0.4,
   },
+  socketFuture: { opacity: 0.15 },
   dayNum: {
     color: VAULT_INK_FAINT,
-    fontSize: 10,
+    fontSize: 9,
     fontVariant: ['tabular-nums'],
-    marginTop: -2,
+    marginTop: -1,
   },
-  dayNumLit: { color: VAULT_INK },
-  // Two bars: a bright lip catching the light from the orbs above it, and a
-  // darker board below for the shelf's thickness.
+  dayNumLit: { color: VAULT_INK, fontWeight: '600' },
+  dayNumFuture: { opacity: 0.4 },
   shelfLip: {
     height: 2,
     backgroundColor: SHELF_LIP,
     borderRadius: 1,
-    marginTop: 2,
-    opacity: 0.9,
+    marginTop: 3,
+    opacity: 0.85,
   },
   shelfBoard: {
     height: 5,
@@ -232,16 +279,16 @@ const styles = StyleSheet.create({
   },
   pin: {
     position: 'absolute',
-    top: 2,
-    right: 4,
-    width: 7,
-    height: 7,
+    top: 0,
+    right: 2,
+    width: 6,
+    height: 6,
     borderRadius: radii.pill,
     backgroundColor: '#ffd76a',
   },
   footnote: {
     fontSize: 12,
     textAlign: 'center',
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
   },
 });
