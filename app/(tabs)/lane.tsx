@@ -23,13 +23,20 @@ import { useTheme } from '../../src/theme/useTheme';
 const VAULT_TOP = '#191527';
 const VAULT_BOTTOM = '#0e0c16';
 const VAULT_EDGE = '#3b2f1c';
-// Brass, the way the racks read in the film: a bright leading edge catching
-// the light off the orbs, dropping to a shadowed board underneath. Warm
-// metal against the cold indigo is what makes the orbs look lit rather than
-// merely bright.
-const UPRIGHT = '#6b5228';
-const UPRIGHT_LIT = '#c9a052';
-const SHELF = '#8a6a2e';
+
+// Gold is a gradient, not a colour. A flat band reads as painted card; what
+// makes metal look like metal is the fast ramp from a near-white specular
+// down through saturated gold into a deep shadow. These ramps run top-to-
+// bottom on the shelves (lit from above by the orbs) and left-to-right on
+// the uprights (so they read as round columns).
+type Ramp = readonly [string, string, ...string[]];
+
+const LIP_RAMP: Ramp = ['#fffaf0', '#ffe9a8', '#f0c552', '#b8871f'];
+const BOARD_RAMP: Ramp = ['#c99a34', '#9a7024', '#6b4a14', '#4a3210'];
+const UPRIGHT_RAMP: Ramp = ['#3d2a0b', '#a87c26', '#f5dc94', '#c9a052', '#4a340f'];
+// Mirrored so the two columns catch the light from opposite sides.
+const UPRIGHT_RAMP_R: Ramp = ['#4a340f', '#c9a052', '#f5dc94', '#a87c26', '#3d2a0b'];
+const SHEEN: Ramp = ['#ffffff00', '#ffffff26', '#ffffff00'];
 const SHELF_LIP = '#e8c377';
 const VAULT_INK = '#e8dcc0';
 const VAULT_INK_FAINT = '#8a7b5c';
@@ -99,13 +106,13 @@ export default function LaneScreen() {
         >
           {/* Uprights the shelves appear to be fixed to, lit from the inside. */}
           <LinearGradient
-            colors={[UPRIGHT_LIT, UPRIGHT]}
+            colors={UPRIGHT_RAMP}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={[styles.upright, styles.uprightLeft]}
           />
           <LinearGradient
-            colors={[UPRIGHT, UPRIGHT_LIT]}
+            colors={UPRIGHT_RAMP_R}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={[styles.upright, styles.uprightRight]}
@@ -166,8 +173,31 @@ function Shelf({
           <View key={`pad-${i}`} style={styles.cell} />
         ))}
       </View>
-      <View style={styles.shelfLip} />
-      <View style={styles.shelfBoard} />
+      {/* The leading edge: a hard specular line where the light off the orbs
+          catches the rounded front of the rail. */}
+      <LinearGradient
+        colors={LIP_RAMP}
+        locations={[0, 0.18, 0.55, 1]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={styles.shelfLip}
+      />
+      {/* The board below it, falling into shadow. */}
+      <LinearGradient
+        colors={BOARD_RAMP}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={styles.shelfBoard}
+      >
+        {/* A sheen sweeping along the length, so the metal is not uniform
+            across the width the way a painted bar would be. */}
+        <LinearGradient
+          colors={SHEEN}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 1, y: 0.5 }}
+          style={StyleSheet.absoluteFill}
+        />
+      </LinearGradient>
     </View>
   );
 }
@@ -270,17 +300,15 @@ const styles = StyleSheet.create({
   dayNumLit: { color: VAULT_INK, fontWeight: '600' },
   dayNumFuture: { opacity: 0.4 },
   shelfLip: {
-    height: 2,
-    backgroundColor: SHELF_LIP,
-    borderRadius: 1,
+    height: 3,
+    borderRadius: 1.5,
     marginTop: 3,
-    opacity: 0.85,
   },
   shelfBoard: {
-    height: 5,
-    backgroundColor: SHELF,
+    height: 6,
     borderBottomLeftRadius: 3,
     borderBottomRightRadius: 3,
+    overflow: 'hidden',
   },
   pin: {
     position: 'absolute',
