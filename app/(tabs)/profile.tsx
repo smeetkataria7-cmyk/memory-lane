@@ -13,7 +13,7 @@ import {
 import { Avatar } from '../../src/components/Avatar';
 import { ReminderCard } from '../../src/components/ReminderCard';
 import { Screen } from '../../src/components/Screen';
-import { StreakPlant, nextStage } from '../../src/components/StreakPlant';
+import { MemoryTree, nextStage } from '../../src/components/MemoryTree';
 import { signOut, useAuth } from '../../src/lib/auth';
 import { listBalls, todayKey, type Ball } from '../../src/lib/balls';
 import { loadFriendships } from '../../src/lib/friends';
@@ -170,7 +170,7 @@ export default function ProfileScreen() {
         </View>
 
         <View style={[styles.plantCard, { backgroundColor: t.surface, borderColor: t.line }]}>
-          <StreakPlant streak={streak} />
+          <MemoryTree streak={streak} colors={balls.map((b) => b.blended_color)} />
           <Text style={[styles.streakNum, { color: t.ink }]}>
             {streak} {streak === 1 ? 'day' : 'days'} in a row
           </Text>

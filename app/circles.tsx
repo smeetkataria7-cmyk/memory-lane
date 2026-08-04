@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -15,6 +16,7 @@ import {
   createGroup,
   joinGroup,
   leaveGroup,
+  memberCounts,
   myGroups,
   type Group,
 } from '../src/lib/groups';
@@ -34,12 +36,15 @@ export default function CirclesScreen() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [counts, setCounts] = useState<Record<string, number>>({});
 
   const refresh = async () => {
     if (!userId) return;
     try {
-      setGroups(await myGroups(userId));
+      const gs = await myGroups(userId);
+      setGroups(gs);
       setLoadError(null);
+      setCounts(await memberCounts(gs.map((g) => g.id)));
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : 'Could not load circles.');
     }
@@ -96,26 +101,22 @@ export default function CirclesScreen() {
       ) : groups.length > 0 ? (
         <View style={{ gap: spacing.sm }}>
           {groups.map((g) => (
-            <View
+            <CircleCard
               key={g.id}
-              style={[styles.row, { backgroundColor: t.surface, borderColor: t.line }]}
-            >
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.rowName, { color: t.ink }]}>{g.name}</Text>
-                <Text style={[styles.rowCode, { color: t.inkFaint }]}>
-                  Code {g.invite_code}
-                </Text>
-              </View>
-              <Pressable
-                onPress={() => userId && run(() => leaveGroup(userId, g.id))}
-                hitSlop={8}
-              >
-                <Text style={[styles.leave, { color: t.danger }]}>Leave</Text>
-              </Pressable>
-            </View>
+              group={g}
+              members={counts[g.id]}
+              onLeave={() => userId && run(() => leaveGroup(userId, g.id))}
+            />
           ))}
         </View>
-      ) : null}
+      ) : (
+        <View style={[styles.blank, { borderColor: t.line }]}>
+          <Text style={[styles.blankTitle, { color: t.ink }]}>No circles yet</Text>
+          <Text style={[styles.blankCopy, { color: t.inkMuted }]}>
+            Start one below and share the code, or join with a code someone gave you.
+          </Text>
+        </View>
+      )}
 
       <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
         <Text style={[styles.cardTitle, { color: t.ink }]}>Start a circle</Text>
@@ -168,22 +169,126 @@ export default function CirclesScreen() {
   );
 }
 
+// Circles have no colour of their own, so derive a stable one from the name.
+// Same name, same hue, every time - it becomes how you recognise the card.
+function hueFor(name: string): number {
+  let h = 0;
+  for (let i = 0; i < name.length; i += 1) {
+    h = (h * 31 + name.charCodeAt(i)) % 360;
+  }
+  return h;
+}
+
+function CircleCard({
+  group,
+  members,
+  onLeave,
+}: {
+  group: Group;
+  members?: number;
+  onLeave: () => void;
+}) {
+  const t = useTheme();
+  const hue = hueFor(group.name);
+  const tint = `hsl(${hue}, 62%, 55%)`;
+
+  const invite = async () => {
+    try {
+      await Share.share({
+        message: `Join my circle "${group.name}" on Memory Lane — use code ${group.invite_code}`,
+      });
+    } catch {
+      // The user dismissing the share sheet is not an error worth showing.
+    }
+  };
+
+  return (
+    <View style={[styles.card2, { backgroundColor: t.surface, borderColor: t.line }]}>
+      <View style={styles.card2Head}>
+        <View style={[styles.monogram, { backgroundColor: tint }]}>
+          <Text style={styles.monogramText}>
+            {group.name.trim().charAt(0).toUpperCase() || '?'}
+          </Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.rowName, { color: t.ink }]} numberOfLines={1}>
+            {group.name}
+          </Text>
+          <Text style={[styles.rowMeta, { color: t.inkMuted }]}>
+            {members === undefined
+              ? 'Loading…'
+              : `${members} of 20 ${members === 1 ? 'person' : 'people'}`}
+          </Text>
+        </View>
+      </View>
+
+      <View style={[styles.codeStrip, { backgroundColor: t.surface2 }]}>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.codeLabel, { color: t.inkFaint }]}>INVITE CODE</Text>
+          <Text style={[styles.codeValue, { color: t.ink }]}>{group.invite_code}</Text>
+        </View>
+        <Pressable onPress={invite} style={[styles.sharePill, { backgroundColor: t.accent }]}>
+          <Text style={styles.sharePillText}>Share</Text>
+        </Pressable>
+      </View>
+
+      <Pressable onPress={onLeave} hitSlop={8} style={styles.leaveRow}>
+        <Text style={[styles.leave, { color: t.danger }]}>Leave this circle</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   scroll: { paddingHorizontal: spacing.md, gap: spacing.md },
   back: { fontSize: 16, fontWeight: '700' },
   title: { fontSize: 28, fontWeight: '700' },
   lead: { fontSize: 15, lineHeight: 22 },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
+  rowName: { fontSize: 16, fontWeight: '700' },
+  rowMeta: { fontSize: 13, marginTop: 1 },
+  leave: { fontSize: 13, fontWeight: '700' },
+  card2: {
     borderWidth: 1,
     borderRadius: radii.md,
     padding: spacing.md,
+    gap: spacing.sm,
   },
-  rowName: { fontSize: 15, fontWeight: '700' },
-  rowCode: { fontSize: 12, letterSpacing: 1 },
-  leave: { fontSize: 14, fontWeight: '700' },
+  card2Head: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  monogram: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  monogramText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  codeStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    borderRadius: radii.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  codeLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1 },
+  codeValue: { fontSize: 19, fontWeight: '700', letterSpacing: 3 },
+  sharePill: {
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+    borderRadius: radii.pill,
+  },
+  sharePillText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  leaveRow: { alignSelf: 'flex-start', paddingTop: 2 },
+  blank: {
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderRadius: radii.md,
+    padding: spacing.lg,
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  blankTitle: { fontSize: 16, fontWeight: '700' },
+  blankCopy: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
   card: { borderWidth: 1, borderRadius: radii.md, padding: spacing.md, gap: spacing.sm },
   cardTitle: { fontSize: 16, fontWeight: '700' },
   input: {

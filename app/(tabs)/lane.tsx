@@ -2,13 +2,13 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Dimensions,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import Svg, { Circle as SvgCircle } from 'react-native-svg';
 import { Orb } from '../../src/components/Orb';
 import { Screen } from '../../src/components/Screen';
 import { useAuth } from '../../src/lib/auth';
@@ -17,37 +17,18 @@ import { buildLane, monthLabel, type LaneCell } from '../../src/lib/lane';
 import { radii, spacing } from '../../src/theme/tokens';
 import { useTheme } from '../../src/theme/useTheme';
 
-const SPIRAL_WIDTH = 28;
-const HOLE_RADIUS = 4;
-const HOLE_SPACING = 32;
+// The vault is deliberately dark in both themes: a lit orb only reads as lit
+// against something darker than it is. This is the one screen that opts out
+// of the paper palette.
+const VAULT = '#15131f';
+const VAULT_EDGE = '#231f33';
+const SHELF = '#2f2a45';
+const SHELF_LIP = '#443c63';
+const VAULT_INK = '#cfc9e6';
+const VAULT_INK_FAINT = '#6d6689';
 
-function SpiralBinding({ height }: { height: number }) {
-  const t = useTheme();
-  const holeCount = Math.max(3, Math.floor(height / HOLE_SPACING));
-  const holes = Array.from({ length: holeCount }, (_, i) => {
-    const y = HOLE_SPACING / 2 + i * HOLE_SPACING;
-    return y;
-  });
-
-  return (
-    <View style={styles.spiralCol}>
-      <View style={[styles.spiralSpine, { backgroundColor: t.line }]} />
-      <Svg width={SPIRAL_WIDTH} height={height} style={styles.spiralSvg}>
-        {holes.map((y) => (
-          <SvgCircle
-            key={y}
-            cx={SPIRAL_WIDTH / 2}
-            cy={y}
-            r={HOLE_RADIUS}
-            fill={t.paper}
-            stroke={t.inkFaint}
-            strokeWidth={1.5}
-          />
-        ))}
-      </Svg>
-    </View>
-  );
-}
+const CELL = 48;
+const ORB = 46;
 
 export default function LaneScreen() {
   const t = useTheme();
@@ -55,7 +36,6 @@ export default function LaneScreen() {
   const { userId } = useAuth();
   const [balls, setBalls] = useState<Ball[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pageHeight, setPageHeight] = useState(400);
 
   useFocusEffect(
     useCallback(() => {
@@ -87,7 +67,7 @@ export default function LaneScreen() {
       <Screen title="Lane">
         <View style={styles.center}>
           <Text style={[styles.empty, { color: t.inkMuted }]}>
-            Nothing here yet. Fill today's orb and it will be the first.
+            Nothing on the shelves yet. Fill today's orb and it will be the first.
           </Text>
         </View>
       </Screen>
@@ -95,117 +75,173 @@ export default function LaneScreen() {
   }
 
   const months = buildLane(balls);
+  const width = Dimensions.get('window').width;
+  // Screen padding, then the vault's own inset, then whatever whole cells fit.
+  const usable = width - spacing.md * 2 - spacing.md * 2;
+  const perRow = Math.max(4, Math.floor(usable / CELL));
 
   return (
     <Screen title="Lane">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        <View style={styles.notebook}>
-          <SpiralBinding height={pageHeight} />
-          <View
-            style={[styles.page, { backgroundColor: t.surface, borderColor: t.line }]}
-            onLayout={(e) => setPageHeight(e.nativeEvent.layout.height)}
-          >
-            {months.map((m) => (
-              <View key={m.key} style={styles.month}>
-                <Text style={[styles.monthName, { color: t.inkMuted }]}>
-                  {monthLabel(m.key)}
-                </Text>
-                <View style={styles.grid}>
-                  {m.cells.map((cell: LaneCell) => (
-                    <LaneDot
-                      key={cell.day}
-                      cell={cell}
-                      onPress={() =>
-                        cell.ball && router.push({ pathname: '/ball/[day]', params: { day: cell.day } })
-                      }
-                    />
-                  ))}
-                </View>
-              </View>
-            ))}
-          </View>
+        <View style={styles.vault}>
+          {months.map((m) => (
+            <View key={m.key} style={styles.rack}>
+              <Text style={styles.rackLabel}>{monthLabel(m.key)}</Text>
+              {chunk(m.cells, perRow).map((row, i) => (
+                <Shelf
+                  key={`${m.key}-${i}`}
+                  cells={row}
+                  perRow={perRow}
+                  onOpen={(day) =>
+                    router.push({ pathname: '/ball/[day]', params: { day } })
+                  }
+                />
+              ))}
+            </View>
+          ))}
         </View>
+        <Text style={[styles.footnote, { color: t.inkFaint }]}>
+          Every orb is a day you filled in. Tap one to open it.
+        </Text>
       </ScrollView>
     </Screen>
   );
 }
 
-function LaneDot({ cell, onPress }: { cell: LaneCell; onPress: () => void }) {
-  const t = useTheme();
+function chunk<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+}
+
+function Shelf({
+  cells,
+  perRow,
+  onOpen,
+}: {
+  cells: LaneCell[];
+  perRow: number;
+  onOpen: (day: string) => void;
+}) {
+  return (
+    <View style={styles.shelf}>
+      <View style={styles.shelfRow}>
+        {cells.map((cell) => (
+          <Socket key={cell.day} cell={cell} onOpen={onOpen} />
+        ))}
+        {/* Keep the last shelf of a month the same width as the others. */}
+        {Array.from({ length: perRow - cells.length }, (_, i) => (
+          <View key={`pad-${i}`} style={styles.cell} />
+        ))}
+      </View>
+      <View style={styles.shelfLip} />
+      <View style={styles.shelfBoard} />
+    </View>
+  );
+}
+
+function Socket({
+  cell,
+  onOpen,
+}: {
+  cell: LaneCell;
+  onOpen: (day: string) => void;
+}) {
   if (!cell.ball) {
     return (
       <View style={styles.cell}>
-        <View style={[styles.blank, { borderColor: t.line }]} />
-        <Text style={[styles.dayNum, { color: t.inkFaint }]}>{cell.dayOfMonth}</Text>
+        <View style={styles.emptySocket} />
+        <Text style={styles.dayNum}>{cell.dayOfMonth}</Text>
       </View>
     );
   }
+
   return (
-    <Pressable style={styles.cell} onPress={onPress}>
-      <Orb size={38} fills={cell.ball.fills} />
-      <Text style={[styles.dayNum, { color: t.inkMuted }]}>{cell.dayOfMonth}</Text>
-      {cell.ball.journey ? (
-        <View style={[styles.pin, { backgroundColor: t.accent }]} />
-      ) : null}
+    <Pressable style={styles.cell} onPress={() => onOpen(cell.day)}>
+      <Orb size={ORB} fills={cell.ball.fills} glow />
+      <Text style={[styles.dayNum, styles.dayNumLit]}>{cell.dayOfMonth}</Text>
+      {cell.ball.journey ? <View style={styles.pin} /> : null}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.lg },
-  empty: { fontSize: 15, textAlign: 'center', maxWidth: 280, lineHeight: 22 },
-  scroll: { paddingBottom: spacing.xl, paddingRight: spacing.sm },
-  notebook: { flexDirection: 'row', minHeight: 200 },
-  spiralCol: {
-    width: SPIRAL_WIDTH,
-    alignItems: 'center',
-    zIndex: 1,
-  },
-  spiralSpine: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    right: 0,
-    width: 2,
-  },
-  spiralSvg: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-  },
-  page: {
+  center: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
+  },
+  empty: { fontSize: 15, textAlign: 'center', maxWidth: 280, lineHeight: 22 },
+  scroll: { paddingBottom: spacing.xl, gap: spacing.sm },
+  vault: {
+    backgroundColor: VAULT,
+    borderColor: VAULT_EDGE,
     borderWidth: 1,
-    borderLeftWidth: 0,
     borderRadius: radii.md,
-    borderTopLeftRadius: 0,
-    borderBottomLeftRadius: 0,
     padding: spacing.md,
     gap: spacing.lg,
   },
-  month: { gap: spacing.sm },
-  monthName: {
-    fontSize: 12,
+  rack: { gap: spacing.xs },
+  rackLabel: {
+    color: VAULT_INK,
+    fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    letterSpacing: 1.2,
+    marginBottom: 2,
   },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  cell: { width: 44, alignItems: 'center', gap: 2, position: 'relative' },
-  blank: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+  shelf: { marginBottom: spacing.sm },
+  shelfRow: { flexDirection: 'row', alignItems: 'flex-end' },
+  cell: {
+    width: CELL,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    position: 'relative',
+  },
+  emptySocket: {
+    width: ORB * 0.5,
+    height: ORB * 0.5,
+    marginVertical: ORB * 0.25,
+    borderRadius: ORB,
     borderWidth: 1,
-    borderStyle: 'dashed',
+    borderColor: VAULT_INK_FAINT,
+    opacity: 0.35,
   },
-  dayNum: { fontSize: 10, fontVariant: ['tabular-nums'] },
+  dayNum: {
+    color: VAULT_INK_FAINT,
+    fontSize: 10,
+    fontVariant: ['tabular-nums'],
+    marginTop: -2,
+  },
+  dayNumLit: { color: VAULT_INK },
+  // Two bars: a bright lip catching the light from the orbs above it, and a
+  // darker board below for the shelf's thickness.
+  shelfLip: {
+    height: 2,
+    backgroundColor: SHELF_LIP,
+    borderRadius: 1,
+    marginTop: 2,
+    opacity: 0.9,
+  },
+  shelfBoard: {
+    height: 5,
+    backgroundColor: SHELF,
+    borderBottomLeftRadius: 3,
+    borderBottomRightRadius: 3,
+  },
   pin: {
     position: 'absolute',
-    top: 0,
-    right: 3,
+    top: 2,
+    right: 4,
     width: 7,
     height: 7,
     borderRadius: radii.pill,
+    backgroundColor: '#ffd76a',
+  },
+  footnote: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: spacing.xs,
   },
 });

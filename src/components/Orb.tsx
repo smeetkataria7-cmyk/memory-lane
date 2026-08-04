@@ -18,11 +18,15 @@ type Props = {
   // The group board only ever receives a blended color, never the
   // underlying emotions - so it renders the glaze from that alone.
   colorOverride?: string;
+  // Lit-from-within, for the shelves in Lane. The halo is drawn inside the
+  // same viewBox rather than as a second layer, so a wall of these is still
+  // one SVG per orb. The sphere shrinks to two thirds to make room.
+  glow?: boolean;
 };
 
 // A glazed, lit sphere: painterly color-bleed dabs for each emotion,
 // then shadow/light/specular layers that make it read as 3D.
-export const Orb = memo(function Orb({ fills, size, colorOverride }: Props) {
+export const Orb = memo(function Orb({ fills, size, colorOverride, glow }: Props) {
   const active = colorOverride
     ? []
     : fills.filter((f) => f.weight > 0).sort((a, b) => b.weight - a.weight);
@@ -45,8 +49,19 @@ export const Orb = memo(function Orb({ fills, size, colorOverride }: Props) {
 
   return (
     <View style={{ width: size, height: size }}>
-      <Svg width={size} height={size} viewBox="0 0 100 100">
+      <Svg
+        width={size}
+        height={size}
+        viewBox={glow ? '-25 -25 150 150' : '0 0 100 100'}
+      >
         <Defs>
+          {glow ? (
+            <RadialGradient id="halo" cx="50%" cy="50%" r="50%">
+              <Stop offset="0%" stopColor={lighten(base, 0.2)} stopOpacity={0.75} />
+              <Stop offset="45%" stopColor={base} stopOpacity={0.35} />
+              <Stop offset="100%" stopColor={base} stopOpacity={0} />
+            </RadialGradient>
+          ) : null}
           <RadialGradient id="baseGrad" cx="35%" cy="30%" r="80%">
             <Stop offset="0%" stopColor={lighten(base, 0.35)} />
             <Stop offset="55%" stopColor={base} />
@@ -83,6 +98,8 @@ export const Orb = memo(function Orb({ fills, size, colorOverride }: Props) {
             <Circle cx="50" cy="50" r="50" />
           </ClipPath>
         </Defs>
+
+        {glow ? <Circle cx="50" cy="50" r="74" fill="url(#halo)" /> : null}
 
         <G clipPath="url(#sphere)">
           <Circle cx="50" cy="50" r="50" fill="url(#baseGrad)" />

@@ -42,6 +42,24 @@ export async function createGroup(name: string): Promise<Group> {
   return group;
 }
 
+// Counts for every circle at once, rather than a query per card.
+export async function memberCounts(
+  groupIds: string[],
+): Promise<Record<string, number>> {
+  if (groupIds.length === 0) return {};
+  const { data, error } = await supabase
+    .from('group_members')
+    .select('group_id')
+    .in('group_id', groupIds);
+  if (error) return {};
+  const counts: Record<string, number> = {};
+  for (const row of data ?? []) {
+    const id = row.group_id as string;
+    counts[id] = (counts[id] ?? 0) + 1;
+  }
+  return counts;
+}
+
 export async function joinGroup(code: string): Promise<string> {
   const { data, error } = await supabase.rpc('join_group_with_code', {
     code: code.trim().toUpperCase(),

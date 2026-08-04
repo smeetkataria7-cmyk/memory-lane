@@ -10,11 +10,12 @@ import {
 } from 'react-native';
 import { Orb } from '../../src/components/Orb';
 import { Screen } from '../../src/components/Screen';
+import { SpiralPage } from '../../src/components/SpiralPage';
 import { useAuth } from '../../src/lib/auth';
 import { listJourney, type Ball } from '../../src/lib/balls';
 import { journeyReasonLabel } from '../../src/lib/journey';
 import { formatDay } from '../../src/lib/lane';
-import { radii, spacing } from '../../src/theme/tokens';
+import { spacing } from '../../src/theme/tokens';
 import { useTheme } from '../../src/theme/useTheme';
 
 export default function JourneyScreen() {
@@ -64,28 +65,33 @@ export default function JourneyScreen() {
   return (
     <Screen title="Journey">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        {balls.map((b) => (
-          <Pressable
-            key={b.id}
-            onPress={() => router.push({ pathname: '/ball/[day]', params: { day: b.day } })}
-            style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}
-          >
-            <Orb size={64} fills={b.fills} />
-            <View style={styles.cardBody}>
-              <Text style={[styles.cardDate, { color: t.ink }]}>{formatDay(b.day)}</Text>
-              {b.journey_reason ? (
-                <Text style={[styles.cardReason, { color: t.accent }]}>
-                  ✦ {journeyReasonLabel[b.journey_reason]}
-                </Text>
-              ) : null}
-              {b.note ? (
-                <Text numberOfLines={2} style={[styles.cardNote, { color: t.inkMuted }]}>
-                  {b.note}
-                </Text>
-              ) : null}
-            </View>
-          </Pressable>
-        ))}
+        <SpiralPage>
+          {balls.map((b, i) => (
+            <Pressable
+              key={b.id}
+              onPress={() => router.push({ pathname: '/ball/[day]', params: { day: b.day } })}
+              style={[
+                styles.entry,
+                i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.line },
+              ]}
+            >
+              <Orb size={64} fills={b.fills} />
+              <View style={styles.cardBody}>
+                <Text style={[styles.cardDate, { color: t.ink }]}>{formatDay(b.day)}</Text>
+                {b.journey_reason ? (
+                  <Text style={[styles.cardReason, { color: t.accent }]}>
+                    ✦ {journeyReasonLabel[b.journey_reason]}
+                  </Text>
+                ) : null}
+                {b.note ? (
+                  <Text numberOfLines={3} style={[styles.cardNote, { color: t.inkMuted }]}>
+                    {b.note}
+                  </Text>
+                ) : null}
+              </View>
+            </Pressable>
+          ))}
+        </SpiralPage>
       </ScrollView>
     </Screen>
   );
@@ -94,14 +100,12 @@ export default function JourneyScreen() {
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.lg },
   empty: { fontSize: 15, textAlign: 'center', maxWidth: 300, lineHeight: 22 },
-  scroll: { paddingBottom: spacing.xl, gap: spacing.sm },
-  card: {
+  scroll: { paddingBottom: spacing.xl, paddingRight: spacing.sm },
+  entry: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    borderWidth: 1,
-    borderRadius: radii.md,
-    padding: spacing.md,
+    paddingVertical: spacing.md,
   },
   cardBody: { flex: 1, gap: 2 },
   cardDate: { fontSize: 15, fontWeight: '700' },

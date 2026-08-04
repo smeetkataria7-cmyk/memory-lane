@@ -6,7 +6,7 @@ import { EmotionPicker } from '../../src/components/EmotionPicker';
 import { Orb } from '../../src/components/Orb';
 import { Recaps } from '../../src/components/Recaps';
 import { Screen } from '../../src/components/Screen';
-import { StreakPlant, nextStage } from '../../src/components/StreakPlant';
+import { MemoryTree, nextStage } from '../../src/components/MemoryTree';
 import { useAuth } from '../../src/lib/auth';
 import { listBalls, todayKey, type Ball } from '../../src/lib/balls';
 import { currentStreak } from '../../src/lib/lane';
@@ -61,6 +61,8 @@ export default function TodayScreen() {
 
   const streak = currentStreak(balls);
   const next = nextStage(streak);
+  // Newest first, so the most recent days sit at the middle of the canopy.
+  const leafColors = balls.map((b) => b.blended_color);
 
   if (checked && !showPicker) {
     return (
@@ -92,7 +94,7 @@ export default function TodayScreen() {
           </View>
 
           <View style={[styles.streakCard, { backgroundColor: t.surface, borderColor: t.line }]}>
-            <StreakPlant streak={streak} size={110} />
+            <MemoryTree streak={streak} colors={leafColors} size={110} />
             <View style={styles.streakInfo}>
               <Text style={[styles.streakCount, { color: t.ink }]}>
                 {streak} day{streak !== 1 ? 's' : ''}
