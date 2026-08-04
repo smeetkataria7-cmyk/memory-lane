@@ -22,13 +22,17 @@ import { useTheme } from '../../src/theme/useTheme';
 // of the paper palette.
 const VAULT_TOP = '#191527';
 const VAULT_BOTTOM = '#0e0c16';
-const VAULT_EDGE = '#282243';
-const UPRIGHT = '#231d3a';
-const UPRIGHT_LIT = '#3a3159';
-const SHELF = '#2a2440';
-const SHELF_LIP = '#4a4070';
-const VAULT_INK = '#d6d0ec';
-const VAULT_INK_FAINT = '#615a7d';
+const VAULT_EDGE = '#3b2f1c';
+// Brass, the way the racks read in the film: a bright leading edge catching
+// the light off the orbs, dropping to a shadowed board underneath. Warm
+// metal against the cold indigo is what makes the orbs look lit rather than
+// merely bright.
+const UPRIGHT = '#6b5228';
+const UPRIGHT_LIT = '#c9a052';
+const SHELF = '#8a6a2e';
+const SHELF_LIP = '#e8c377';
+const VAULT_INK = '#e8dcc0';
+const VAULT_INK_FAINT = '#8a7b5c';
 
 // Seven to a shelf, so a row is a week and every shelf is full.
 const PER_SHELF = 7;
@@ -246,14 +250,15 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     position: 'relative',
   },
+  // An empty socket is a brass cradle with nothing resting in it.
   socket: {
     width: ORB * 0.42,
     height: ORB * 0.42,
     marginVertical: ORB * 0.29,
     borderRadius: ORB,
     borderWidth: 1,
-    borderColor: VAULT_INK_FAINT,
-    opacity: 0.4,
+    borderColor: SHELF_LIP,
+    opacity: 0.3,
   },
   socketFuture: { opacity: 0.15 },
   dayNum: {
