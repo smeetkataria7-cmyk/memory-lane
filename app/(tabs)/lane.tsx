@@ -22,24 +22,38 @@ import { useTheme } from '../../src/theme/useTheme';
 // of the paper palette.
 const VAULT_TOP = '#191527';
 const VAULT_BOTTOM = '#0e0c16';
-const VAULT_EDGE = '#3b2f1c';
+const VAULT_EDGE = '#33291a';
 
-// Gold is a gradient, not a colour. A flat band reads as painted card; what
-// makes metal look like metal is the fast ramp from a near-white specular
-// down through saturated gold into a deep shadow. These ramps run top-to-
-// bottom on the shelves (lit from above by the orbs) and left-to-right on
-// the uprights (so they read as round columns).
+// Amber glass rather than polished metal. Polished brass competed with the
+// orbs for attention - the shelf was the brightest thing on a screen whose
+// subject is the memories. A lit glass ledge stays subordinate: brightest
+// along its middle where the orbs sit and falling off to nearly nothing at
+// the ends, so the light still reads as coming from what it is holding.
 type Ramp = readonly [string, string, ...string[]];
 
-const LIP_RAMP: Ramp = ['#fffaf0', '#ffe9a8', '#f0c552', '#b8871f'];
-const BOARD_RAMP: Ramp = ['#c99a34', '#9a7024', '#6b4a14', '#4a3210'];
-const UPRIGHT_RAMP: Ramp = ['#3d2a0b', '#a87c26', '#f5dc94', '#c9a052', '#4a340f'];
-// Mirrored so the two columns catch the light from opposite sides.
-const UPRIGHT_RAMP_R: Ramp = ['#4a340f', '#c9a052', '#f5dc94', '#a87c26', '#3d2a0b'];
-const SHEEN: Ramp = ['#ffffff00', '#ffffff26', '#ffffff00'];
-const SHELF_LIP = '#e8c377';
-const VAULT_INK = '#e8dcc0';
-const VAULT_INK_FAINT = '#8a7b5c';
+// Horizontal: bright where the orbs rest, fading out toward the uprights.
+const LIP_RAMP: Ramp = [
+  'rgba(255,184,74,0.13)',
+  'rgba(255,207,122,0.80)',
+  '#fff0c0',
+  'rgba(255,207,122,0.80)',
+  'rgba(255,184,74,0.13)',
+];
+const LIP_STOPS: readonly [number, number, ...number[]] = [0, 0.25, 0.5, 0.75, 1];
+
+// Vertical: the glow spilling down through the glass and dying out.
+const BOARD_RAMP: Ramp = ['rgba(138,95,30,0.53)', 'rgba(58,38,10,0.13)'];
+
+// The uprights are glass too - a faint warm column, not a metal post.
+const UPRIGHT_RAMP: Ramp = [
+  'rgba(255,207,122,0.07)',
+  'rgba(255,207,122,0.20)',
+  'rgba(255,207,122,0.07)',
+];
+
+const SHELF_LIP = '#c9a05a';
+const VAULT_INK = '#f0dcb4';
+const VAULT_INK_FAINT = '#94805c';
 
 // Seven to a shelf, so a row is a week and every shelf is full.
 const PER_SHELF = 7;
@@ -115,7 +129,7 @@ export default function LaneScreen() {
             style={[styles.upright, styles.uprightLeft]}
           />
           <LinearGradient
-            colors={UPRIGHT_RAMP_R}
+            colors={UPRIGHT_RAMP}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={[styles.upright, styles.uprightRight]}
@@ -176,31 +190,21 @@ function Shelf({
           <View key={`pad-${i}`} style={styles.cell} />
         ))}
       </View>
-      {/* The leading edge: a hard specular line where the light off the orbs
-          catches the rounded front of the rail. */}
+      {/* The glass ledge, lit along its middle where the orbs rest. */}
       <LinearGradient
         colors={LIP_RAMP}
-        locations={[0, 0.18, 0.55, 1]}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
+        locations={LIP_STOPS}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
         style={styles.shelfLip}
       />
-      {/* The board below it, falling into shadow. */}
+      {/* The glow spilling down through it. */}
       <LinearGradient
         colors={BOARD_RAMP}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={styles.shelfBoard}
-      >
-        {/* A sheen sweeping along the length, so the metal is not uniform
-            across the width the way a painted bar would be. */}
-        <LinearGradient
-          colors={SHEEN}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-          style={StyleSheet.absoluteFill}
-        />
-      </LinearGradient>
+      />
     </View>
   );
 }
@@ -303,15 +307,12 @@ const styles = StyleSheet.create({
   dayNumLit: { color: VAULT_INK, fontWeight: '600' },
   dayNumFuture: { opacity: 0.4 },
   shelfLip: {
-    height: 3,
-    borderRadius: 1.5,
+    height: 4,
+    borderRadius: 2,
     marginTop: 3,
   },
   shelfBoard: {
-    height: 6,
-    borderBottomLeftRadius: 3,
-    borderBottomRightRadius: 3,
-    overflow: 'hidden',
+    height: 5,
   },
   pin: {
     position: 'absolute',

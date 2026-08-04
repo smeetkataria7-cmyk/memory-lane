@@ -3,6 +3,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Dimensions,
   Image,
   Linking,
   Modal,
@@ -71,6 +72,7 @@ export default function BoardScreen() {
   const [selectedSlot, setSelectedSlot] = useState<{ profile: Profile; color: string | null } | null>(null);
   const [sharedMedia, setSharedMedia] = useState<MediaItem[]>([]);
   const [mediaLoading, setMediaLoading] = useState(false);
+  const [viewingImage, setViewingImage] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     if (!userId) return;
@@ -288,7 +290,7 @@ export default function BoardScreen() {
                   </Text>
                 </View>
               ) : null}
-              <Pressable onPress={() => setSelectedSlot(null)}>
+              <Pressable onPress={() => { setViewingImage(null); setSelectedSlot(null); }}>
                 <Text style={[styles.modalCloseText, { color: t.accent }]}>Done</Text>
               </Pressable>
             </View>
@@ -315,11 +317,12 @@ export default function BoardScreen() {
                   if (!m.url) return null;
                   if (m.kind === 'photo') {
                     return (
-                      <Image
-                        key={m.id}
-                        source={{ uri: m.url }}
-                        style={styles.sharedPhoto}
-                      />
+                      <Pressable key={m.id} onPress={() => setViewingImage(m.url)}>
+                        <Image source={{ uri: m.url }} style={styles.sharedPhoto} />
+                        <View style={styles.expandBadge}>
+                          <Text style={styles.expandGlyph}>⤢</Text>
+                        </View>
+                      </Pressable>
                     );
                   }
                   if (m.kind === 'audio') {
@@ -341,6 +344,23 @@ export default function BoardScreen() {
               </ScrollView>
             )}
           </View>
+
+          {/* Rendered inside this Modal rather than as a second one: stacking
+              Modals is unreliable on Android, and this only ever appears
+              while the sheet is already open. */}
+          {viewingImage ? (
+            <Pressable
+              style={styles.lightbox}
+              onPress={() => setViewingImage(null)}
+            >
+              <Image
+                source={{ uri: viewingImage }}
+                style={styles.lightboxImage}
+                resizeMode="contain"
+              />
+              <Text style={styles.lightboxHint}>Tap anywhere to close</Text>
+            </Pressable>
+          ) : null}
         </View>
       </Modal>
     </Screen>
@@ -431,6 +451,34 @@ const styles = StyleSheet.create({
   noMedia: { fontSize: 14, textAlign: 'center', paddingVertical: spacing.md },
   mediaScroll: { gap: spacing.sm, paddingVertical: spacing.xs },
   sharedPhoto: { width: 140, height: 140, borderRadius: radii.md },
+  expandBadge: {
+    position: 'absolute',
+    right: 6,
+    bottom: 6,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#000000a6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  expandGlyph: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  lightbox: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#000000f2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.lg,
+  },
+  lightboxImage: {
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height * 0.72,
+  },
+  lightboxHint: { color: '#ffffff99', fontSize: 13, fontWeight: '600' },
   sharedMediaItem: {
     width: 100,
     height: 140,
