@@ -1,7 +1,7 @@
 import { RecordingPresets, useAudioRecorder } from 'expo-audio';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -17,9 +17,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Orb } from '../src/components/Orb';
 import { SharePicker } from '../src/components/SharePicker';
 import { useAuth } from '../src/lib/auth';
-import { listBalls, saveBall, type PendingMedia } from '../src/lib/balls';
+import { getBall, listBalls, saveBall, todayKey, type PendingMedia } from '../src/lib/balls';
 import { refreshWidgets } from '../src/lib/widgets';
-import type { ShareTarget } from '../src/lib/groups';
+import { loadAudience, type ShareTarget } from '../src/lib/groups';
 import type { EmotionFill } from '../src/lib/blend';
 import { detectJourney, journeyReasonLabel } from '../src/lib/journey';
 import { refreshReminders } from '../src/lib/reminders';
@@ -45,6 +45,25 @@ export default function ComposeScreen() {
 
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const [recording, setRecording] = useState(false);
+
+  // Re-editing a day lands here with only the emotions carried over. Without
+  // reloading what was already saved, saving again would blank the note and
+  // silently pull the day off everyone's board.
+  useEffect(() => {
+    if (!userId) return;
+    let alive = true;
+    const day = todayKey();
+    Promise.all([getBall(userId, day), loadAudience(userId, day)])
+      .then(([ball, audience]) => {
+        if (!alive) return;
+        if (ball?.note) setNote(ball.note);
+        setShareWith(audience);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [userId]);
 
   const pick = async (kind: 'photo' | 'video') => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();

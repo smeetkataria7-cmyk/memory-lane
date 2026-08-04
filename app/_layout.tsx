@@ -27,7 +27,11 @@ function AuthGate() {
   useEffect(() => {
     if (loading) return;
     const onSignIn = segments[0] === 'sign-in';
-    if (!session && !onSignIn) {
+    // /auth/callback is signed-out by definition: it is where the OAuth code
+    // is exchanged for a session. Bouncing it to sign-in kills the exchange
+    // mid-flight, which is what made Google sign-in flash an error screen.
+    const onCallback = segments[0] === 'auth';
+    if (!session && !onSignIn && !onCallback) {
       router.replace('/sign-in');
     } else if (session && onSignIn) {
       router.replace('/');
