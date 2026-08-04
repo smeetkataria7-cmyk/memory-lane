@@ -14,6 +14,7 @@ import { Avatar } from '../../src/components/Avatar';
 import { ReminderCard } from '../../src/components/ReminderCard';
 import { Screen } from '../../src/components/Screen';
 import { MemoryTree, nextStage } from '../../src/components/MemoryTree';
+import Constants from 'expo-constants';
 import { signOut, useAuth } from '../../src/lib/auth';
 import { listBalls, todayKey, type Ball } from '../../src/lib/balls';
 import { loadFriendships } from '../../src/lib/friends';
@@ -213,6 +214,12 @@ export default function ProfileScreen() {
         <Pressable onPress={signOut} style={[styles.signOut, { borderColor: t.line }]}>
           <Text style={[styles.signOutText, { color: t.danger }]}>Sign out</Text>
         </Pressable>
+
+        {/* So "did the new build actually install?" is answerable by looking,
+            rather than by guessing from which features appear. */}
+        <Text style={[styles.build, { color: t.inkFaint }]}>
+          Memory Lane v{Constants.expoConfig?.version ?? '?'}
+        </Text>
       </ScrollView>
     </Screen>
   );
@@ -293,4 +300,5 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   signOutText: { fontSize: 15, fontWeight: '700' },
+  build: { fontSize: 12, textAlign: 'center', marginTop: spacing.md },
 });
