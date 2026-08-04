@@ -35,7 +35,11 @@ export async function createGroup(name: string): Promise<Group> {
     group_name: name.trim(),
   });
   if (error) throw error;
-  return data as Group;
+  // A composite return comes back as one object, but tolerate a single-row
+  // array too rather than hand the UI an undefined name.
+  const group = one(data as Group | Group[]);
+  if (!group?.id) throw new Error('The circle was not created. Try again.');
+  return group;
 }
 
 export async function joinGroup(code: string): Promise<string> {
