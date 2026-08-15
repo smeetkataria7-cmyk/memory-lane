@@ -11,9 +11,11 @@ import {
 } from 'react-native';
 import { Orb } from '../../src/components/Orb';
 import { LoadError } from '../../src/components/LoadError';
+import { OrbEntrance } from '../../src/components/OrbEntrance';
 import { Screen } from '../../src/components/Screen';
 import { useAuth } from '../../src/lib/auth';
 import { listBalls, type Ball } from '../../src/lib/balls';
+import { todayKey } from '../../src/lib/dates';
 import { buildLane, monthLabel, type LaneCell } from '../../src/lib/lane';
 import { radii, spacing } from '../../src/theme/tokens';
 import { useTheme } from '../../src/theme/useTheme';
@@ -244,7 +246,9 @@ function Socket({
 
   return (
     <Pressable style={styles.cell} onPress={() => onOpen(cell.day)}>
-      <Orb size={ORB} fills={cell.ball.fills} glow />
+      <OrbEntrance animate={cell.day === todayKey()}>
+        <Orb size={ORB} fills={cell.ball.fills} glow />
+      </OrbEntrance>
       <Text style={[styles.dayNum, styles.dayNumLit]}>{cell.dayOfMonth}</Text>
       {cell.ball.journey ? <View style={styles.pin} /> : null}
     </Pressable>

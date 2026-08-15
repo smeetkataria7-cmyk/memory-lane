@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { tapTick } from '../lib/haptics';
 import { EMOTIONS, radii, spacing, type EmotionKey } from '../theme/tokens';
 import { useTheme } from '../theme/useTheme';
 import type { Weights } from '../lib/useEmotionPool';
@@ -35,7 +36,10 @@ export function EmotionPicker({ weights, onHoldStart, onHoldEnd, onClearOne }: P
               ]}
             />
             <Pressable
-              onPressIn={() => onHoldStart(e.key)}
+              onPressIn={() => {
+                tapTick();
+                onHoldStart(e.key);
+              }}
               onPressOut={onHoldEnd}
               delayLongPress={100000}
               style={({ pressed }) => [
@@ -51,7 +55,10 @@ export function EmotionPicker({ weights, onHoldStart, onHoldEnd, onClearOne }: P
             {w > 0 ? (
               <Pressable
                 hitSlop={10}
-                onPress={() => onClearOne(e.key)}
+                onPress={() => {
+                  tapTick();
+                  onClearOne(e.key);
+                }}
                 style={styles.clear}
               >
                 <Text style={[styles.pct, { color: t.inkMuted }]}>{pct}%</Text>

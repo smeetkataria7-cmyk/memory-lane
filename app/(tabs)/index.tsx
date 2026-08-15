@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { EmotionPicker } from '../../src/components/EmotionPicker';
@@ -9,6 +9,7 @@ import { Screen } from '../../src/components/Screen';
 import { MemoryTree, nextStage } from '../../src/components/MemoryTree';
 import { useAuth } from '../../src/lib/auth';
 import { listBalls, todayKey, type Ball } from '../../src/lib/balls';
+import { poolFull } from '../../src/lib/haptics';
 import { currentStreak, formatDay } from '../../src/lib/lane';
 import { refreshReminders } from '../../src/lib/reminders';
 import { refreshWidgets } from '../../src/lib/widgets';
@@ -60,6 +61,12 @@ export default function TodayScreen() {
 
   const empty = pool.used === 0;
   const full = pool.used >= POOL_TOTAL - 0.5;
+
+  // Knock once when the last of the day's weight is spent, not on every
+  // frame that stays full.
+  useEffect(() => {
+    if (full) poolFull();
+  }, [full]);
   const showPicker = !existing || editing;
 
   const streak = currentStreak(balls);

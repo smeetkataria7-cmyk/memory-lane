@@ -29,6 +29,7 @@ import {
   type BallMedia,
   type PendingMedia,
 } from '../src/lib/balls';
+import { failed as hapticFailed, saved as hapticSaved } from '../src/lib/haptics';
 import { refreshWidgets } from '../src/lib/widgets';
 import { loadAudience, type ShareTarget } from '../src/lib/groups';
 import type { EmotionFill } from '../src/lib/blend';
@@ -129,8 +130,10 @@ export default function ComposeScreen() {
       // Today is done - drop tonight's nudge, keep the rest of the window.
       await refreshReminders(true).catch(() => {});
       await listBalls(userId).then(refreshWidgets).catch(() => {});
+      hapticSaved();
       router.replace('/lane');
     } catch (e) {
+      hapticFailed();
       setError(e instanceof Error ? e.message : 'Could not save today.');
     } finally {
       setBusy(false);
