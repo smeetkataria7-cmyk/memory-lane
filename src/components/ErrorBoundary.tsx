@@ -1,6 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { dark, light, radii, spacing } from '../theme/tokens';
+import { dark, light, radii, spacing, typography } from '../theme/tokens';
 
 type Props = { children: ReactNode; scheme: 'light' | 'dark' };
 type State = { error: Error | null };
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     gap: spacing.sm,
   },
-  title: { fontSize: 22, fontWeight: '700' },
+  title: { ...typography.subhead, fontSize: 22 },
   body: { fontSize: 15, textAlign: 'center', lineHeight: 22, maxWidth: 320 },
   detail: {
     fontSize: 12,

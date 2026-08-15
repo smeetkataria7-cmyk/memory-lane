@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Orb } from '../src/components/Orb';
 import { SharePicker } from '../src/components/SharePicker';
+import { PressableScale } from '../src/components/PressableScale';
 import { useAuth } from '../src/lib/auth';
 import {
   deleteMedia,
@@ -33,7 +34,7 @@ import { loadAudience, type ShareTarget } from '../src/lib/groups';
 import type { EmotionFill } from '../src/lib/blend';
 import { detectJourney, journeyReasonLabel } from '../src/lib/journey';
 import { refreshReminders } from '../src/lib/reminders';
-import { radii, spacing } from '../src/theme/tokens';
+import { radii, spacing, typography } from '../src/theme/tokens';
 import { useTheme } from '../src/theme/useTheme';
 
 export default function ComposeScreen() {
@@ -171,18 +172,18 @@ export default function ComposeScreen() {
 
       <Text style={[styles.label, { color: t.inkMuted }]}>Hold onto something</Text>
       <View style={styles.mediaRow}>
-        <Pressable
+        <PressableScale
           onPress={() => pick('photo')}
           style={[styles.mediaBtn, { backgroundColor: t.surface, borderColor: t.line }]}
         >
           <Text style={[styles.mediaText, { color: t.ink }]}>Photo</Text>
-        </Pressable>
-        <Pressable
+        </PressableScale>
+        <PressableScale
           onPress={() => pick('video')}
           style={[styles.mediaBtn, { backgroundColor: t.surface, borderColor: t.line }]}
         >
           <Text style={[styles.mediaText, { color: t.ink }]}>Video</Text>
-        </Pressable>
+        </PressableScale>
         {Platform.OS !== 'web' ? (
           <Pressable
             onPress={toggleRecording}
@@ -293,7 +294,7 @@ export default function ComposeScreen() {
         >
           <Text style={[styles.btnText, { color: t.inkMuted }]}>Back</Text>
         </Pressable>
-        <Pressable
+        <PressableScale
           onPress={save}
           disabled={busy}
           style={[styles.btn, styles.btnPrimary, { backgroundColor: t.accent }]}
@@ -303,7 +304,7 @@ export default function ComposeScreen() {
           ) : (
             <Text style={[styles.btnText, { color: '#fff' }]}>Save today</Text>
           )}
-        </Pressable>
+        </PressableScale>
       </View>
     </ScrollView>
   );
@@ -312,7 +313,7 @@ export default function ComposeScreen() {
 const styles = StyleSheet.create({
   scroll: { paddingHorizontal: spacing.md, gap: spacing.md },
   head: { alignItems: 'center', gap: spacing.sm },
-  title: { fontSize: 24, fontWeight: '700' },
+  title: typography.heading,
   pill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: radii.pill },
   pillText: { fontSize: 12, fontWeight: '700' },
   label: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.6 },

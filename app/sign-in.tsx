@@ -14,7 +14,7 @@ import { Orb } from '../src/components/Orb';
 import { signIn, signUp } from '../src/lib/auth';
 import { signInWithGoogle } from '../src/lib/google';
 import { isSupabaseConfigured } from '../src/lib/supabase';
-import { radii, spacing } from '../src/theme/tokens';
+import { radii, spacing, typography } from '../src/theme/tokens';
 import { useTheme } from '../src/theme/useTheme';
 
 export default function SignInScreen() {
@@ -175,7 +175,7 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, paddingHorizontal: spacing.lg },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: spacing.sm },
-  title: { fontSize: 30, fontWeight: '700', marginTop: spacing.md },
+  title: { ...typography.display, marginTop: spacing.md },
   body: { fontSize: 15, textAlign: 'center', maxWidth: 300 },
   form: { width: '100%', maxWidth: 360, gap: spacing.sm, marginTop: spacing.lg },
   input: {

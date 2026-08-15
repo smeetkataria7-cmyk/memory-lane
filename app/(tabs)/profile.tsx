@@ -26,7 +26,7 @@ import {
   uploadAvatar,
   type Profile,
 } from '../../src/lib/profiles';
-import { radii, spacing } from '../../src/theme/tokens';
+import { radii, spacing, typography } from '../../src/theme/tokens';
 import { useTheme } from '../../src/theme/useTheme';
 
 export default function ProfileScreen() {
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   editBadgeText: { color: '#fff', fontSize: 13, fontWeight: '700' },
-  name: { fontSize: 20, fontWeight: '700' },
+  name: typography.subhead,
   nameEdit: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, width: '100%' },
   nameInput: {
     flex: 1,
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 2,
   },
-  statNum: { fontSize: 24, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  statNum: typography.stat,
   statLabel: { fontSize: 12 },
   link: {
     flexDirection: 'row',

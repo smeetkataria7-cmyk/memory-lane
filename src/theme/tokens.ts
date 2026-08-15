@@ -63,4 +63,27 @@ export const radii = {
   pill: 999,
 } as const;
 
+// Tracking is size-specific, never one value for everything: letters read
+// too far apart as type grows, so headings tighten, while small uppercase
+// labels need the opposite. Leading tightens with size for the same reason.
+// React Native letterSpacing is in points, so these are roughly -0.02em.
+export const typography = {
+  display: { fontSize: 30, fontWeight: '700', letterSpacing: -0.7, lineHeight: 35 },
+  title: { fontSize: 28, fontWeight: '700', letterSpacing: -0.6, lineHeight: 33 },
+  heading: { fontSize: 24, fontWeight: '700', letterSpacing: -0.45, lineHeight: 29 },
+  subhead: { fontSize: 20, fontWeight: '700', letterSpacing: -0.3, lineHeight: 25 },
+  stat: {
+    fontSize: 24,
+    fontWeight: '700' as const,
+    letterSpacing: -0.4,
+    fontVariant: ['tabular-nums'] as ('tabular-nums')[],
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+} as const;
+
 export const POOL_TOTAL = 100;

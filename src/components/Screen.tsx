@@ -1,7 +1,7 @@
 import type { PropsWithChildren, ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { spacing } from '../theme/tokens';
+import { spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/useTheme';
 
 export function Screen({
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   headText: { flex: 1 },
-  title: { fontSize: 28, fontWeight: '700' },
+  title: typography.title,
   subtitle: { fontSize: 14, marginTop: 2 },
   body: { flex: 1 },
 });

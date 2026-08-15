@@ -14,7 +14,7 @@ import { useAuth } from '../src/lib/auth';
 import { listBalls, type Ball } from '../src/lib/balls';
 import { formatDay, monthLabel } from '../src/lib/lane';
 import { availableMonths, monthMoments } from '../src/lib/recaps';
-import { radii, spacing } from '../src/theme/tokens';
+import { radii, spacing, typography } from '../src/theme/tokens';
 import { useTheme } from '../src/theme/useTheme';
 
 export default function MomentsScreen() {
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
   scroll: { paddingHorizontal: spacing.md, gap: spacing.md },
   back: { fontSize: 16, fontWeight: '700' },
-  title: { fontSize: 28, fontWeight: '700' },
+  title: typography.title,
   monthRow: { flexDirection: 'row', gap: spacing.sm, paddingVertical: 2 },
   monthChip: {
     borderWidth: 1,
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   },
   monthChipText: { fontSize: 13, fontWeight: '700' },
   card: { borderWidth: 1, borderRadius: radii.md, padding: spacing.md, gap: spacing.xs },
-  big: { fontSize: 22, fontWeight: '700' },
+  big: { ...typography.subhead, fontSize: 22 },
   sub: { fontSize: 15 },
   spread: { gap: 6, marginTop: spacing.sm },
   spreadRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },

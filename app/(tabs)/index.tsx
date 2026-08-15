@@ -13,7 +13,7 @@ import { currentStreak, formatDay } from '../../src/lib/lane';
 import { refreshReminders } from '../../src/lib/reminders';
 import { refreshWidgets } from '../../src/lib/widgets';
 import { useEmotionPool } from '../../src/lib/useEmotionPool';
-import { POOL_TOTAL, radii, spacing } from '../../src/theme/tokens';
+import { POOL_TOTAL, radii, spacing, typography } from '../../src/theme/tokens';
 import { useTheme } from '../../src/theme/useTheme';
 
 export default function TodayScreen() {
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
   btnPrimary: { minWidth: 140, alignItems: 'center' },
   btnText: { fontSize: 15, fontWeight: '700' },
   done: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
-  doneTitle: { fontSize: 20, fontWeight: '700' },
+  doneTitle: typography.subhead,
   doneNote: { fontSize: 15, textAlign: 'center', maxWidth: 300, lineHeight: 22 },
   doneActions: { flexDirection: 'row', gap: spacing.sm },
   streakCard: {

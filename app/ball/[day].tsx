@@ -30,7 +30,7 @@ import {
 import { loadAudience, type ShareTarget } from '../../src/lib/groups';
 import { journeyReasonLabel } from '../../src/lib/journey';
 import { formatDay } from '../../src/lib/lane';
-import { EMOTIONS, radii, spacing } from '../../src/theme/tokens';
+import { EMOTIONS, radii, spacing, typography } from '../../src/theme/tokens';
 import { useTheme } from '../../src/theme/useTheme';
 
 function AudioButton({ url }: { url: string }) {
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: spacing.md, gap: spacing.md },
   back: { fontSize: 16, fontWeight: '700' },
   head: { alignItems: 'center', gap: spacing.sm },
-  date: { fontSize: 20, fontWeight: '700', textAlign: 'center' },
+  date: { ...typography.subhead, textAlign: 'center' },
   pill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: radii.pill },
   pillText: { fontSize: 12, fontWeight: '700' },
   bars: { gap: 6, marginTop: spacing.sm },

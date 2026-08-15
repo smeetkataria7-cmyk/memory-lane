@@ -21,7 +21,7 @@ import {
   type FriendRequest,
 } from '../src/lib/friends';
 import { searchProfiles, type Profile } from '../src/lib/profiles';
-import { radii, spacing } from '../src/theme/tokens';
+import { radii, spacing, typography } from '../src/theme/tokens';
 import { useTheme } from '../src/theme/useTheme';
 
 export default function FriendsScreen() {
@@ -245,7 +245,7 @@ function Tag({ label }: { label: string }) {
 const styles = StyleSheet.create({
   scroll: { paddingHorizontal: spacing.md, gap: spacing.md },
   back: { fontSize: 16, fontWeight: '700' },
-  title: { fontSize: 28, fontWeight: '700' },
+  title: typography.title,
   input: {
     borderWidth: 1,
     borderRadius: radii.md,

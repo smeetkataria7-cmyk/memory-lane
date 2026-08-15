@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PressableScale } from '../src/components/PressableScale';
 import { useAuth } from '../src/lib/auth';
 import {
   createGroup,
@@ -20,7 +21,7 @@ import {
   myGroups,
   type Group,
 } from '../src/lib/groups';
-import { radii, spacing } from '../src/theme/tokens';
+import { radii, spacing, typography } from '../src/theme/tokens';
 import { useTheme } from '../src/theme/useTheme';
 
 export default function CirclesScreen() {
@@ -127,7 +128,7 @@ export default function CirclesScreen() {
           placeholderTextColor={t.inkFaint}
           style={[styles.input, { backgroundColor: t.paper, borderColor: t.line, color: t.ink }]}
         />
-        <Pressable
+        <PressableScale
           disabled={busy || !name.trim() || !userId}
           onPress={() => run(() => createGroup(name), () => setName(''))}
           style={[styles.btn, { backgroundColor: !name.trim() ? t.surface2 : t.accent }]}
@@ -135,7 +136,7 @@ export default function CirclesScreen() {
           <Text style={[styles.btnText, { color: !name.trim() ? t.inkFaint : '#fff' }]}>
             Create
           </Text>
-        </Pressable>
+        </PressableScale>
       </View>
 
       <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
@@ -148,7 +149,7 @@ export default function CirclesScreen() {
           autoCapitalize="characters"
           style={[styles.input, { backgroundColor: t.paper, borderColor: t.line, color: t.ink }]}
         />
-        <Pressable
+        <PressableScale
           disabled={busy || !code.trim() || !userId}
           onPress={() => run(() => joinGroup(code), () => setCode(''))}
           style={[styles.btn, { backgroundColor: !code.trim() ? t.surface2 : t.accent }]}
@@ -156,7 +157,7 @@ export default function CirclesScreen() {
           <Text style={[styles.btnText, { color: !code.trim() ? t.inkFaint : '#fff' }]}>
             Join
           </Text>
-        </Pressable>
+        </PressableScale>
       </View>
 
       {busy ? <ActivityIndicator color={t.accent} /> : null}
@@ -242,7 +243,7 @@ function CircleCard({
 const styles = StyleSheet.create({
   scroll: { paddingHorizontal: spacing.md, gap: spacing.md },
   back: { fontSize: 16, fontWeight: '700' },
-  title: { fontSize: 28, fontWeight: '700' },
+  title: typography.title,
   lead: { fontSize: 15, lineHeight: 22 },
   rowName: { fontSize: 16, fontWeight: '700' },
   rowMeta: { fontSize: 13, marginTop: 1 },
