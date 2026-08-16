@@ -15,6 +15,7 @@ import { OrbEntrance } from '../../src/components/OrbEntrance';
 import { Screen } from '../../src/components/Screen';
 import { useAuth } from '../../src/lib/auth';
 import { listBalls, type Ball } from '../../src/lib/balls';
+import { refreshWidgets } from '../../src/lib/widgets';
 import { todayKey } from '../../src/lib/dates';
 import { buildLane, monthLabel, type LaneCell } from '../../src/lib/lane';
 import { radii, spacing } from '../../src/theme/tokens';
@@ -81,6 +82,9 @@ export default function LaneScreen() {
           if (!alive) return;
           setBalls(b);
           setLoadError(null);
+          // Someone who mostly lives on this screen would otherwise never
+          // see the widget update after their first save.
+          refreshWidgets(b).catch(() => {});
         })
         .catch((e) => alive && setLoadError(e instanceof Error ? e.message : 'Check your connection and try again.'))
         .finally(() => alive && setLoading(false));

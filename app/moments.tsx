@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Orb } from '../src/components/Orb';
 import { useAuth } from '../src/lib/auth';
 import { listBalls, type Ball } from '../src/lib/balls';
+import { refreshWidgets } from '../src/lib/widgets';
 import { formatDay, monthLabel } from '../src/lib/lane';
 import { availableMonths, monthMoments } from '../src/lib/recaps';
 import { radii, spacing, typography } from '../src/theme/tokens';
@@ -35,6 +36,7 @@ export default function MomentsScreen() {
         setBalls(b);
         const months = availableMonths(b);
         setMonth(months[0] ?? null);
+        refreshWidgets(b).catch(() => {});
       })
       .catch(() => {})
       .finally(() => alive && setLoading(false));

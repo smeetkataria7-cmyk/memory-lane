@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useId } from 'react';
 import { View } from 'react-native';
 import Svg, {
   Circle,
@@ -27,6 +27,14 @@ type Props = {
 // A glazed, lit sphere: painterly color-bleed dabs for each emotion,
 // then shadow/light/specular layers that make it read as 3D.
 export const Orb = memo(function Orb({ fills, size, colorOverride, glow }: Props) {
+  // SVG gradient/clip ids are global to the document, not scoped to their own
+  // <Svg>. A wall of orbs on Lane used to emit the same ids from every
+  // instance - it happened to render correctly, but only because the
+  // definitions were identical; a screen mixing glow and non-glow orbs, or a
+  // future change to per-orb gradients, would have every orb pick up
+  // whichever instance's def resolved first. useId() gives each orb its own
+  // namespace so this can't happen regardless of what's on screen with it.
+  const uid = useId().replace(/:/g, '');
   const active = colorOverride
     ? []
     : fills.filter((f) => f.weight > 0).sort((a, b) => b.weight - a.weight);
@@ -56,13 +64,13 @@ export const Orb = memo(function Orb({ fills, size, colorOverride, glow }: Props
       >
         <Defs>
           {glow ? (
-            <RadialGradient id="halo" cx="50%" cy="50%" r="50%">
+            <RadialGradient id={`${uid}-halo`} cx="50%" cy="50%" r="50%">
               <Stop offset="0%" stopColor={lighten(base, 0.2)} stopOpacity={0.75} />
               <Stop offset="45%" stopColor={base} stopOpacity={0.35} />
               <Stop offset="100%" stopColor={base} stopOpacity={0} />
             </RadialGradient>
           ) : null}
-          <RadialGradient id="baseGrad" cx="35%" cy="30%" r="80%">
+          <RadialGradient id={`${uid}-baseGrad`} cx="35%" cy="30%" r="80%">
             <Stop offset="0%" stopColor={lighten(base, 0.35)} />
             <Stop offset="55%" stopColor={base} />
             <Stop offset="100%" stopColor={darken(base, 0.25)} />
@@ -70,7 +78,7 @@ export const Orb = memo(function Orb({ fills, size, colorOverride, glow }: Props
           {active.slice(1, 1 + dabAnchors.length).map((f, i) => (
             <RadialGradient
               key={`dab-${f.emotion}`}
-              id={`dab-${i}`}
+              id={`${uid}-dab-${i}`}
               cx="50%"
               cy="50%"
               r="50%"
@@ -80,29 +88,29 @@ export const Orb = memo(function Orb({ fills, size, colorOverride, glow }: Props
               <Stop offset="100%" stopColor={emotionColor(f.emotion)} stopOpacity={0} />
             </RadialGradient>
           ))}
-          <RadialGradient id="coreShadow" cx="70%" cy="78%" r="70%">
+          <RadialGradient id={`${uid}-coreShadow`} cx="70%" cy="78%" r="70%">
             <Stop offset="0%" stopColor="#000" stopOpacity={0.4} />
             <Stop offset="60%" stopColor="#000" stopOpacity={0.12} />
             <Stop offset="100%" stopColor="#000" stopOpacity={0} />
           </RadialGradient>
-          <RadialGradient id="topLight" cx="30%" cy="22%" r="55%">
+          <RadialGradient id={`${uid}-topLight`} cx="30%" cy="22%" r="55%">
             <Stop offset="0%" stopColor="#fff" stopOpacity={glow ? 0.3 : 0.55} />
             <Stop offset="60%" stopColor="#fff" stopOpacity={glow ? 0.06 : 0.1} />
             <Stop offset="100%" stopColor="#fff" stopOpacity={0} />
           </RadialGradient>
-          <RadialGradient id="bounce" cx="50%" cy="50%" r="50%">
+          <RadialGradient id={`${uid}-bounce`} cx="50%" cy="50%" r="50%">
             <Stop offset="0%" stopColor="#fff" stopOpacity={0.3} />
             <Stop offset="100%" stopColor="#fff" stopOpacity={0} />
           </RadialGradient>
-          <ClipPath id="sphere">
+          <ClipPath id={`${uid}-sphere`}>
             <Circle cx="50" cy="50" r="50" />
           </ClipPath>
         </Defs>
 
-        {glow ? <Circle cx="50" cy="50" r="74" fill="url(#halo)" /> : null}
+        {glow ? <Circle cx="50" cy="50" r="74" fill={`url(#${uid}-halo)`} /> : null}
 
-        <G clipPath="url(#sphere)">
-          <Circle cx="50" cy="50" r="50" fill="url(#baseGrad)" />
+        <G clipPath={`url(#${uid}-sphere)`}>
+          <Circle cx="50" cy="50" r="50" fill={`url(#${uid}-baseGrad)`} />
 
           {active.slice(1, 1 + dabAnchors.length).map((f, i) => {
             const share = f.weight / total;
@@ -114,14 +122,14 @@ export const Orb = memo(function Orb({ fills, size, colorOverride, glow }: Props
                 cx={a.cx * 100}
                 cy={a.cy * 100}
                 r={dabR}
-                fill={`url(#dab-${i})`}
+                fill={`url(#${uid}-dab-${i})`}
               />
             );
           })}
 
-          <Circle cx="50" cy="50" r="50" fill="url(#coreShadow)" />
-          <Circle cx="50" cy="50" r="50" fill="url(#topLight)" />
-          <Ellipse cx="50" cy="90" rx="30" ry="8" fill="url(#bounce)" />
+          <Circle cx="50" cy="50" r="50" fill={`url(#${uid}-coreShadow)`} />
+          <Circle cx="50" cy="50" r="50" fill={`url(#${uid}-topLight)`} />
+          <Ellipse cx="50" cy="90" rx="30" ry="8" fill={`url(#${uid}-bounce)`} />
           {/* On the shelves the orb is small and lit from within, so a full
               specular reads as white plastic. Keep a hint of it instead. */}
           <Ellipse

@@ -17,6 +17,7 @@ import { MemoryTree, nextStage } from '../../src/components/MemoryTree';
 import Constants from 'expo-constants';
 import { signOut, useAuth } from '../../src/lib/auth';
 import { listBalls, todayKey, type Ball } from '../../src/lib/balls';
+import { refreshWidgets } from '../../src/lib/widgets';
 import { loadFriendships } from '../../src/lib/friends';
 import { myGroups } from '../../src/lib/groups';
 import { currentStreak } from '../../src/lib/lane';
@@ -58,6 +59,7 @@ export default function ProfileScreen() {
           setBalls(b);
           setProfile(p);
           setCounts({ friends: f.friends.length, circles: g.length });
+          refreshWidgets(b).catch(() => {});
         })
         .catch(() => {})
         .finally(() => alive && setLoading(false));
