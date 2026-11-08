@@ -38,10 +38,20 @@ matter rise into Journey on their own.
 ### 1. Create a Supabase project
 
 Go to [supabase.com](https://supabase.com), create a free project, then open the
-SQL editor and run the migrations in `supabase/migrations/` in order —
-`0001_init.sql` then `0002_friends_avatars_circles.sql`. Together they create
-the tables, row-level security policies, the media and avatar storage buckets,
-and turn on realtime for the board.
+SQL editor and run **all five** migrations in `supabase/migrations/`, in order:
+
+| # | File | What it adds |
+|---|---|---|
+| 1 | `0001_init.sql` | profiles, balls (days), media, circles, board, row-level security, media bucket |
+| 2 | `0002_friends_avatars_circles.sql` | friends, avatars, the shared-colour table, avatar bucket |
+| 3 | `0003_shared_media.sql` | photos, video and voice notes shared with a day |
+| 4 | `0004_share_audience.sql` | per-day audience (specific circles and friends) and `can_see_share` |
+| 5 | `0005_fix_create_circle.sql` | fixes creating a circle |
+
+Skipping any of them leaves features broken: without 3 and 4, shared media and
+audiences don't work, and without 5 creating a circle fails. Together they
+create the tables, row-level security policies, the storage buckets, and turn
+on realtime for the board.
 
 ### 2. Point the app at it
 
@@ -171,6 +181,7 @@ value — widening is always something you picked.
 ```bash
 npm start          # Expo dev server
 npm run typecheck  # tsc --noEmit
+npm test           # unit tests (Vitest) for the pure logic in src/lib
 npm run android    # open on Android
 npm run ios        # open on iOS (needs macOS)
 ```
