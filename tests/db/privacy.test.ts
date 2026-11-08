@@ -234,10 +234,10 @@ describe('circles', () => {
     ).rejects.toThrow(/needs a name/);
   });
 
-  it('rejects a wrong invite code', async () => {
-    await expect(
-      as(db, 'dave', () => db.query(`select public.join_group_with_code('NOPE00')`)),
-    ).rejects.toThrow(/invalid invite code/);
+  it('does not let you into a circle with a wrong invite code', async () => {
+    const res = await as(db, 'dave', () => db.query(`select public.join_group_with_code('NOPE00') as gid`));
+    expect((res.rows[0] as { gid: string | null }).gid).toBeNull();
+    expect(await as(db, 'dave', () => count('select * from public.groups'))).toBe(0);
   });
 
   it('hides a circle from people who are not in it', async () => {

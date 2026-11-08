@@ -33,12 +33,72 @@ matter rise into Journey on their own.
 - **Nightly reminder** — an optional nudge at a time you pick, automatically
   skipped on evenings you have already filled the day
 
+## How it fits together
+
+```mermaid
+flowchart LR
+  App["Mobile app<br/>Expo + React Native + expo-router"]
+  App -- "supabase-js (PKCE sign-in)" --> Auth["Supabase Auth<br/>email + Google"]
+  App -- "queries and RPC" --> DB[("Postgres<br/>row-level security")]
+  App -- "signed URLs" --> Storage["Storage<br/>ball-media, avatars"]
+  DB -- "live updates" --> Realtime["Realtime<br/>shared_colors, friendships, share_audience"]
+  Realtime --> App
+  App --> Widgets["Android home-screen widgets"]
+  App --> Reminder["Local nightly reminder"]
+```
+
+The app talks straight to Supabase. There is no server of our own, so **the
+database policies are the security boundary**, not the app. That is why they
+are tested (see `tests/db`).
+
+### Data model
+
+```mermaid
+erDiagram
+  PROFILES ||--o{ BALLS : "fills one a day"
+  BALLS ||--o{ BALL_MEDIA : "has"
+  PROFILES ||--o{ GROUP_MEMBERS : "joins"
+  GROUPS ||--o{ GROUP_MEMBERS : "has up to 20"
+  PROFILES ||--o{ GROUPS : "creates"
+  PROFILES ||--o{ FRIENDSHIPS : "requests or accepts"
+  PROFILES ||--o{ SHARED_COLORS : "shares a colour"
+  PROFILES ||--o{ SHARED_MEDIA : "shares files"
+  PROFILES ||--o{ SHARE_AUDIENCE : "picks who sees a day"
+  GROUPS ||--o{ SHARE_AUDIENCE : "audience: a circle"
+  PROFILES ||--o{ SHARE_AUDIENCE : "audience: a friend"
+
+  BALLS {
+    uuid user_id
+    date day "unique per user"
+    jsonb fills "emotion weights"
+    text note "private, never shared"
+    text journey_reason
+  }
+  SHARED_COLORS {
+    uuid user_id
+    date day
+    text color "colour only, no note or fills"
+  }
+  SHARE_AUDIENCE {
+    uuid user_id
+    date day
+    uuid group_id "exactly one of these two"
+    uuid friend_id
+  }
+```
+
+Three tables are deliberately separate. `balls` holds everything and is readable
+only by its owner. `shared_colors` and `shared_media` have no column that could
+carry a note or the emotion breakdown. `share_audience` says who may see a shared
+day, and an empty audience means private. (`board_posts` from the first
+migration is a leftover: the app no longer reads it.)
+
 ## Setup
 
 ### 1. Create a Supabase project
 
 Go to [supabase.com](https://supabase.com), create a free project, then open the
-SQL editor and run **all five** migrations in `supabase/migrations/`, in order:
+SQL editor and run **all six** migrations in `supabase/migrations/`, in order:
 
 | # | File | What it adds |
 |---|---|---|
@@ -47,9 +107,10 @@ SQL editor and run **all five** migrations in `supabase/migrations/`, in order:
 | 3 | `0003_shared_media.sql` | photos, video and voice notes shared with a day |
 | 4 | `0004_share_audience.sql` | per-day audience (specific circles and friends) and `can_see_share` |
 | 5 | `0005_fix_create_circle.sql` | fixes creating a circle |
+| 6 | `0006_hardening.sql` | upload limits on the storage buckets, stronger invite codes with a lockout for guessing, delete-my-account and export-my-data |
 
 Skipping any of them leaves features broken: without 3 and 4, shared media and
-audiences don't work, and without 5 creating a circle fails. Together they
+audiences don't work, without 5 creating a circle fails, and without 6 there are no upload limits and no account deletion. Together they
 create the tables, row-level security policies, the storage buckets, and turn
 on realtime for the board.
 
