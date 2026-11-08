@@ -107,7 +107,7 @@ SQL editor and run **all six** migrations in `supabase/migrations/`, in order:
 | 3 | `0003_shared_media.sql` | photos, video and voice notes shared with a day |
 | 4 | `0004_share_audience.sql` | per-day audience (specific circles and friends) and `can_see_share` |
 | 5 | `0005_fix_create_circle.sql` | fixes creating a circle |
-| 6 | `0006_hardening.sql` | upload limits on the storage buckets, stronger invite codes with a lockout for guessing, delete-my-account and export-my-data |
+| 6 | `0006_hardening.sql` | upload limits on the storage buckets, stronger invite codes with a lockout for guessing, delete-my-account, export-my-data and a keep-alive ping |
 
 Skipping any of them leaves features broken: without 3 and 4, shared media and
 audiences don't work, without 5 creating a circle fails, and without 6 there are no upload limits and no account deletion. Together they
@@ -237,11 +237,57 @@ out is not enough to open it.
 An empty audience is the default and means private. There is no "everyone"
 value — widening is always something you picked.
 
+## Keeping the free database awake
+
+A Free Supabase project is paused after a week without enough database
+activity. Nothing is lost, but the app stops working until someone presses
+**Resume** in the Supabase dashboard. Two ways to stop it:
+
+1. **Upgrade to the Pro plan.** Paid projects are never paused. This is the
+   only guaranteed fix.
+2. **Use the keep-alive workflow (free, best effort).** Migration `0006` adds a
+   `keep_alive()` function that makes one tiny write, and
+   `.github/workflows/keep-alive.yml` calls it every three days.
+
+   One-time setup, in the GitHub repo under **Settings → Secrets and variables →
+   Actions**, add two repository secrets:
+
+   | Secret | Value |
+   |---|---|
+   | `SUPABASE_URL` | `https://YOUR-PROJECT-REF.supabase.co` |
+   | `SUPABASE_ANON_KEY` | the publishable key (`sb_publishable_...`), never the secret key |
+
+   Then open the **Actions** tab, pick *Keep Supabase awake* and press **Run
+   workflow** once. A green tick means the ping reached your database.
+
+Two caveats. GitHub switches off scheduled workflows in a repo with no activity
+for 60 days, so push a commit now and then (or press Run workflow). And Supabase
+decides what counts as "enough activity", so this is not a guarantee. A free
+alternative to GitHub is a scheduled `POST` to
+`SUPABASE_URL/rest/v1/rpc/keep_alive` from a service such as cron-job.org, with
+`apikey` and `Authorization: Bearer` headers set to the publishable key.
+
+## Your data
+
+**Profile → Export my data** saves everything the app holds about you as a JSON
+file, including your private notes. **Profile → Delete my account** removes your
+photos, videos and voice notes from Storage, then deletes your account and
+everything tied to it (days, friendships, circle memberships). Circles you
+created are handed to another member, or deleted if you were the only one in
+them. It cannot be undone.
+
+## Accessibility
+
+Every control announces itself as a button, selectable chips and rows report
+whether they are selected, and photo previews and remove buttons have spoken
+labels. The hold-to-fill emotion picker also works without holding: with a
+screen reader on, swipe up or down on an emotion to add or remove 5%.
+
 ## Commands
 
 ```bash
 npm start          # Expo dev server
-npm run typecheck  # tsc --noEmit
+npm run typecheck  # tsc --noEmit, for the app and the tests
 npm test           # unit tests (Vitest) for the pure logic in src/lib
 npm run android    # open on Android
 npm run ios        # open on iOS (needs macOS)
