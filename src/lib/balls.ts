@@ -10,9 +10,10 @@ import {
   type ShareTarget,
 } from './groups';
 import { detectJourney, type JourneyReason } from './journey';
+import { contentTypeFor, extFor, type MediaKind } from './media';
 import { supabase } from './supabase';
 
-export type MediaKind = 'photo' | 'audio' | 'video';
+export type { MediaKind } from './media';
 
 export type PendingMedia = {
   kind: MediaKind;
@@ -39,19 +40,6 @@ export type Ball = {
 };
 
 export { todayKey } from './dates';
-
-const extFor = (kind: MediaKind, uri: string): string => {
-  const guess = uri.split('?')[0].split('.').pop()?.toLowerCase();
-  if (guess && guess.length <= 4) return guess;
-  return kind === 'photo' ? 'jpg' : kind === 'video' ? 'mp4' : 'm4a';
-};
-
-const contentTypeFor = (kind: MediaKind, ext: string): string =>
-  kind === 'photo'
-    ? `image/${ext === 'jpg' ? 'jpeg' : ext}`
-    : kind === 'video'
-      ? `video/${ext}`
-      : `audio/${ext === 'm4a' ? 'mp4' : ext}`;
 
 async function uploadMedia(userId: string, ballId: string, media: PendingMedia) {
   const ext = extFor(media.kind, media.uri);

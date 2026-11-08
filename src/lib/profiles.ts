@@ -1,4 +1,5 @@
 import { File } from 'expo-file-system';
+import { contentTypeFor, extFor } from './media';
 import { supabase } from './supabase';
 
 export type Profile = {
@@ -28,14 +29,14 @@ export async function updateDisplayName(userId: string, name: string) {
 // Avatars live in a public bucket, so the URL can be rendered directly
 // in lists without minting a signed URL per row.
 export async function uploadAvatar(userId: string, uri: string): Promise<string> {
-  const ext = uri.split('?')[0].split('.').pop()?.toLowerCase() || 'jpg';
+  const ext = extFor('photo', uri);
   const path = `${userId}/avatar-${Date.now()}.${ext}`;
   const bytes = await new File(uri).arrayBuffer();
 
   const { error } = await supabase.storage
     .from('avatars')
     .upload(path, bytes, {
-      contentType: `image/${ext === 'jpg' ? 'jpeg' : ext}`,
+      contentType: contentTypeFor('photo', ext),
       upsert: true,
     });
   if (error) throw error;
