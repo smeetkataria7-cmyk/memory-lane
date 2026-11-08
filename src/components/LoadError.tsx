@@ -17,7 +17,7 @@ export function LoadError({
     <View style={styles.root}>
       <Text style={[styles.title, { color: t.ink }]}>Could not load this</Text>
       <Text style={[styles.body, { color: t.inkMuted }]}>{message}</Text>
-      <Pressable onPress={onRetry} style={[styles.btn, { backgroundColor: t.surface2 }]}>
+      <Pressable accessibilityRole="button" onPress={onRetry} style={[styles.btn, { backgroundColor: t.surface2 }]}>
         <Text style={[styles.btnText, { color: t.ink }]}>Try again</Text>
       </Pressable>
     </View>

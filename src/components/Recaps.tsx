@@ -23,7 +23,7 @@ export function Recaps({ balls }: { balls: Ball[] }) {
     <View style={styles.wrap}>
       <View style={styles.headRow}>
         <Text style={[styles.section, { color: t.inkMuted }]}>Looking back</Text>
-        <Pressable onPress={() => router.push('/moments')}>
+        <Pressable accessibilityRole="button" onPress={() => router.push('/moments')}>
           <Text style={[styles.link, { color: t.accent }]}>Moments ›</Text>
         </Pressable>
       </View>
@@ -31,7 +31,7 @@ export function Recaps({ balls }: { balls: Ball[] }) {
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View style={styles.row}>
           {flashbacks.map((f) => (
-            <Pressable
+            <Pressable accessibilityRole="button"
               key={f.ball.id}
               onPress={() =>
                 router.push({ pathname: '/ball/[day]', params: { day: f.ball.day } })
@@ -47,7 +47,7 @@ export function Recaps({ balls }: { balls: Ball[] }) {
           ))}
 
           {resurface ? (
-            <Pressable
+            <Pressable accessibilityRole="button"
               onPress={() =>
                 router.push({ pathname: '/ball/[day]', params: { day: resurface.day } })
               }

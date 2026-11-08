@@ -61,7 +61,7 @@ export default function MomentsScreen() {
         <Text style={{ color: t.inkMuted, textAlign: 'center' }}>
           Fill a few days and your first month will show up here.
         </Text>
-        <Pressable onPress={() => router.back()} style={{ marginTop: spacing.md }}>
+        <Pressable accessibilityRole="button" onPress={() => router.back()} style={{ marginTop: spacing.md }}>
           <Text style={{ color: t.accent, fontWeight: '700' }}>Go back</Text>
         </Pressable>
       </View>
@@ -78,7 +78,7 @@ export default function MomentsScreen() {
         { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.xl },
       ]}
     >
-      <Pressable onPress={() => router.back()}>
+      <Pressable accessibilityRole="button" onPress={() => router.back()}>
         <Text style={[styles.back, { color: t.accent }]}>‹ Back</Text>
       </Pressable>
 
@@ -87,7 +87,8 @@ export default function MomentsScreen() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View style={styles.monthRow}>
           {months.map((k) => (
-            <Pressable
+            <Pressable accessibilityRole="button"
+              accessibilityState={{ selected: k === month }}
               key={k}
               onPress={() => setMonth(k)}
               style={[
@@ -150,7 +151,7 @@ export default function MomentsScreen() {
             {m.journeyDays.length} in Journey
           </Text>
           {m.journeyDays.map((b) => (
-            <Pressable
+            <Pressable accessibilityRole="button"
               key={b.id}
               onPress={() => router.push({ pathname: '/ball/[day]', params: { day: b.day } })}
               style={[styles.row, { backgroundColor: t.surface, borderColor: t.line }]}
@@ -169,7 +170,7 @@ function MiniCard({ ball, caption }: { ball: Ball; caption: string }) {
   const t = useTheme();
   const router = useRouter();
   return (
-    <Pressable
+    <Pressable accessibilityRole="button"
       onPress={() => router.push({ pathname: '/ball/[day]', params: { day: ball.day } })}
       style={[styles.mini, { backgroundColor: t.surface, borderColor: t.line }]}
     >

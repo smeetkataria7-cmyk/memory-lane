@@ -1,12 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { EMOTIONS, POOL_TOTAL, type EmotionKey } from '../theme/tokens';
+import { EMOTIONS, type EmotionKey } from '../theme/tokens';
 import type { EmotionFill } from './blend';
+import { ZERO_WEIGHTS as ZERO, addWeight, removeWeight, type Weights } from './pool';
 
-export type Weights = Record<EmotionKey, number>;
-
-const ZERO: Weights = Object.fromEntries(
-  EMOTIONS.map((e) => [e.key, 0]),
-) as Weights;
+export type { Weights } from './pool';
 
 const TICK_MS = 50;
 const FILL_PER_TICK = 1.4;
@@ -31,31 +28,17 @@ export function useEmotionPool(initial?: Partial<Weights>) {
       stop();
       holding.current = key;
       timer.current = setInterval(() => {
-        setWeights((prev) => {
-          const next = { ...prev };
-          next[key] = Math.min(POOL_TOTAL, next[key] + FILL_PER_TICK);
-          const total = Object.values(next).reduce((s, v) => s + v, 0);
-          const overflow = total - POOL_TOTAL;
-          if (overflow > 0) {
-            const others = EMOTIONS.map((e) => e.key).filter(
-              (k) => k !== key && next[k] > 0,
-            );
-            const otherTotal = others.reduce((s, k) => s + next[k], 0);
-            if (otherTotal <= overflow) {
-              for (const k of others) next[k] = 0;
-              next[key] = POOL_TOTAL;
-            } else {
-              for (const k of others) {
-                next[k] = Math.max(0, next[k] - (overflow * next[k]) / otherTotal);
-              }
-            }
-          }
-          return next;
-        });
+        setWeights((prev) => addWeight(prev, key, FILL_PER_TICK));
       }, TICK_MS);
     },
     [stop],
   );
+
+  // For anyone who can't hold a finger down (screen readers, switch access):
+  // one step up or down, taken from or given back to the same shared pool.
+  const nudge = useCallback((key: EmotionKey, delta: number) => {
+    setWeights((prev) => (delta >= 0 ? addWeight(prev, key, delta) : removeWeight(prev, key, -delta)));
+  }, []);
 
   const clearOne = useCallback((key: EmotionKey) => {
     setWeights((prev) => ({ ...prev, [key]: 0 }));
@@ -76,5 +59,5 @@ export function useEmotionPool(initial?: Partial<Weights>) {
   );
   const used = Object.values(weights).reduce((s, v) => s + v, 0);
 
-  return { weights, fills, used, start, stop, clearOne, reset, load };
+  return { weights, fills, used, start, stop, nudge, clearOne, reset, load };
 }

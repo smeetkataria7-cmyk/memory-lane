@@ -105,11 +105,11 @@ export function SharePicker({
       <View style={styles.overlay}>
         <View style={[styles.sheet, { backgroundColor: t.surface, borderColor: t.line }]}>
           <View style={styles.header}>
-            <Pressable onPress={onClose}>
+            <Pressable accessibilityRole="button" onPress={onClose}>
               <Text style={[styles.headerAction, { color: t.inkMuted }]}>Cancel</Text>
             </Pressable>
             <Text style={[styles.headerTitle, { color: t.ink }]}>Share with</Text>
-            <Pressable onPress={done}>
+            <Pressable accessibilityRole="button" onPress={done}>
               <Text style={[styles.headerAction, { color: t.accent }]}>Done</Text>
             </Pressable>
           </View>
@@ -130,7 +130,8 @@ export function SharePicker({
                     const target: ShareTarget = { kind: 'group', id: g.id };
                     const on = has(target);
                     return (
-                      <Pressable
+                      <Pressable accessibilityRole="checkbox"
+                        accessibilityState={{ checked: on }}
                         key={g.id}
                         onPress={() => toggle(target)}
                         style={[styles.row, { borderColor: t.line }]}
@@ -162,7 +163,8 @@ export function SharePicker({
                     const target: ShareTarget = { kind: 'friend', id: f.id };
                     const on = has(target);
                     return (
-                      <Pressable
+                      <Pressable accessibilityRole="checkbox"
+                        accessibilityState={{ checked: on }}
                         key={f.id}
                         onPress={() => toggle(target)}
                         style={[styles.row, { borderColor: t.line }]}
@@ -187,7 +189,7 @@ export function SharePicker({
                 : `${picked.length} selected`}
             </Text>
             {picked.length > 0 ? (
-              <Pressable onPress={() => setPicked([])}>
+              <Pressable accessibilityRole="button" onPress={() => setPicked([])}>
                 <Text style={[styles.footerClear, { color: t.accent }]}>Clear</Text>
               </Pressable>
             ) : null}

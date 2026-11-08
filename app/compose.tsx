@@ -188,7 +188,7 @@ export default function ComposeScreen() {
           <Text style={[styles.mediaText, { color: t.ink }]}>Video</Text>
         </PressableScale>
         {Platform.OS !== 'web' ? (
-          <Pressable
+          <Pressable accessibilityRole="button"
             onPress={toggleRecording}
             style={[
               styles.mediaBtn,
@@ -218,7 +218,8 @@ export default function ComposeScreen() {
                   </Text>
                 </View>
               )}
-              <Pressable
+              <Pressable accessibilityRole="button"
+                accessibilityLabel="Remove this attachment"
                 onPress={async () => {
                   if (!userId) return;
                   const before = saved;
@@ -252,7 +253,8 @@ export default function ComposeScreen() {
                   </Text>
                 </View>
               )}
-              <Pressable
+              <Pressable accessibilityRole="button"
+                accessibilityLabel="Remove this attachment"
                 onPress={() => setMedia((prev) => prev.filter((_, idx) => idx !== i))}
                 style={[styles.remove, { backgroundColor: t.ink }]}
               >
@@ -263,7 +265,7 @@ export default function ComposeScreen() {
         </View>
       ) : null}
 
-      <Pressable
+      <Pressable accessibilityRole="button"
         onPress={() => setPickerOpen(true)}
         style={[styles.shareRow, { backgroundColor: t.surface, borderColor: t.line }]}
       >
@@ -291,7 +293,7 @@ export default function ComposeScreen() {
       {error ? <Text style={[styles.error, { color: t.danger }]}>{error}</Text> : null}
 
       <View style={styles.actions}>
-        <Pressable
+        <Pressable accessibilityRole="button"
           onPress={() => router.back()}
           style={[styles.btn, { backgroundColor: t.surface2 }]}
         >

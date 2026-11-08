@@ -65,7 +65,8 @@ export function ReminderCard({ filledToday }: { filledToday: boolean }) {
           {CHOICES.map((c) => {
             const active = c.hour === time.hour && c.minute === time.minute;
             return (
-              <Pressable
+              <Pressable accessibilityRole="button"
+                accessibilityState={{ selected: active }}
                 key={`${c.hour}:${c.minute}`}
                 onPress={() => apply(true, c)}
                 style={[

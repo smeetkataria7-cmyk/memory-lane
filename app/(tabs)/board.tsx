@@ -44,7 +44,7 @@ function SharedAudioButton({ url }: { url: string }) {
   const status = useAudioPlayerStatus(player);
 
   return (
-    <Pressable
+    <Pressable accessibilityRole="button"
       onPress={() => (status.playing ? player.pause() : player.play())}
       style={[styles.sharedMediaItem, { backgroundColor: status.playing ? t.accent : t.surface2 }]}
     >
@@ -179,7 +179,8 @@ export default function BoardScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         <View style={[styles.segment, { backgroundColor: t.surface2 }]}>
           {(['circles', 'friends'] as Tab[]).map((k) => (
-            <Pressable
+            <Pressable accessibilityRole="button"
+              accessibilityState={{ selected: tab === k }}
               key={k}
               onPress={() => setTab(k)}
               style={[
@@ -211,7 +212,8 @@ export default function BoardScreen() {
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <View style={styles.chipRow}>
                   {groups.map((g) => (
-                    <Pressable
+                    <Pressable accessibilityRole="button"
+                      accessibilityState={{ selected: g.id === activeId }}
                       key={g.id}
                       onPress={() => setActiveId(g.id)}
                       style={[
@@ -232,7 +234,7 @@ export default function BoardScreen() {
                       </Text>
                     </Pressable>
                   ))}
-                  <Pressable
+                  <Pressable accessibilityRole="button"
                     onPress={() => router.push('/circles')}
                     style={[styles.chip, { borderColor: t.line, borderStyle: 'dashed' }]}
                   >
@@ -266,7 +268,7 @@ export default function BoardScreen() {
             <Text style={[styles.sub, { color: t.inkMuted }]}>
               {friends.length} {friends.length === 1 ? 'friend' : 'friends'}
             </Text>
-            <Pressable onPress={() => router.push('/friends')}>
+            <Pressable accessibilityRole="button" onPress={() => router.push('/friends')}>
               <Text style={[styles.link, { color: t.accent }]}>Manage ›</Text>
             </Pressable>
           </View>
@@ -275,7 +277,7 @@ export default function BoardScreen() {
         {shown.length > 0 ? (
           <View style={styles.grid}>
             {shown.map((s) => (
-              <Pressable key={s.profile.id} style={styles.slot} onPress={() => s.color && openSlot(s)}>
+              <Pressable accessibilityRole="button" key={s.profile.id} style={styles.slot} onPress={() => s.color && openSlot(s)}>
                 {s.color ? (
                   <Orb size={54} fills={[]} colorOverride={s.color} />
                 ) : (
@@ -315,7 +317,7 @@ export default function BoardScreen() {
                   </Text>
                 </View>
               ) : null}
-              <Pressable onPress={() => { setViewingImage(null); setSelectedSlot(null); }}>
+              <Pressable accessibilityRole="button" onPress={() => { setViewingImage(null); setSelectedSlot(null); }}>
                 <Text style={[styles.modalCloseText, { color: t.accent }]}>Done</Text>
               </Pressable>
             </View>
@@ -342,7 +344,7 @@ export default function BoardScreen() {
                   if (!m.url) return null;
                   if (m.kind === 'photo') {
                     return (
-                      <Pressable key={m.id} onPress={() => setViewingImage(m.url)}>
+                      <Pressable accessibilityRole="button" accessibilityLabel="Open shared photo full size" key={m.id} onPress={() => setViewingImage(m.url)}>
                         <Image source={{ uri: m.url }} style={styles.sharedPhoto} />
                         <View style={styles.expandBadge}>
                           <Text style={styles.expandGlyph}>⤢</Text>
@@ -354,7 +356,7 @@ export default function BoardScreen() {
                     return <SharedAudioButton key={m.id} url={m.url} />;
                   }
                   return (
-                    <Pressable
+                    <Pressable accessibilityRole="button"
                       key={m.id}
                       onPress={() => m.url && Linking.openURL(m.url)}
                       style={[styles.sharedMediaItem, { backgroundColor: t.surface2 }]}
@@ -374,7 +376,7 @@ export default function BoardScreen() {
               Modals is unreliable on Android, and this only ever appears
               while the sheet is already open. */}
           {viewingImage ? (
-            <Pressable
+            <Pressable accessibilityRole="button"
               style={styles.lightbox}
               onPress={() => setViewingImage(null)}
             >
@@ -405,7 +407,7 @@ function Empty({
   return (
     <View style={styles.empty}>
       <Text style={[styles.emptyCopy, { color: t.inkMuted }]}>{copy}</Text>
-      <Pressable onPress={onPress} style={[styles.btn, { backgroundColor: t.accent }]}>
+      <Pressable accessibilityRole="button" onPress={onPress} style={[styles.btn, { backgroundColor: t.accent }]}>
         <Text style={[styles.btnText, { color: '#fff' }]}>{action}</Text>
       </Pressable>
     </View>

@@ -249,7 +249,7 @@ function Socket({
   }
 
   return (
-    <Pressable style={styles.cell} onPress={() => onOpen(cell.day)}>
+    <Pressable accessibilityRole="button" style={styles.cell} onPress={() => onOpen(cell.day)}>
       <OrbEntrance animate={cell.day === todayKey()}>
         <Orb size={ORB} fills={cell.ball.fills} glow />
       </OrbEntrance>

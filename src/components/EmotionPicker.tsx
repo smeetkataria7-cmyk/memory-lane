@@ -9,9 +9,13 @@ type Props = {
   onHoldStart: (key: EmotionKey) => void;
   onHoldEnd: () => void;
   onClearOne: (key: EmotionKey) => void;
+  onNudge: (key: EmotionKey, delta: number) => void;
 };
 
-export function EmotionPicker({ weights, onHoldStart, onHoldEnd, onClearOne }: Props) {
+// How far one swipe up or down moves an emotion for screen-reader users.
+const NUDGE = 5;
+
+export function EmotionPicker({ weights, onHoldStart, onHoldEnd, onClearOne, onNudge }: Props) {
   const t = useTheme();
   return (
     <View style={styles.grid}>
@@ -42,6 +46,20 @@ export function EmotionPicker({ weights, onHoldStart, onHoldEnd, onClearOne }: P
               }}
               onPressOut={onHoldEnd}
               delayLongPress={100000}
+              // Holding is a gesture a screen reader can't make, so the same
+              // control also works as a slider: swipe up or down to adjust.
+              accessibilityRole="adjustable"
+              accessibilityLabel={e.label}
+              accessibilityHint="Hold to fill, or swipe up and down to adjust"
+              accessibilityValue={{ text: `${pct} percent` }}
+              accessibilityActions={[
+                { name: 'increment', label: `Add ${NUDGE} percent` },
+                { name: 'decrement', label: `Remove ${NUDGE} percent` },
+              ]}
+              onAccessibilityAction={(ev) => {
+                if (ev.nativeEvent.actionName === 'increment') onNudge(e.key, NUDGE);
+                if (ev.nativeEvent.actionName === 'decrement') onNudge(e.key, -NUDGE);
+              }}
               style={({ pressed }) => [
                 styles.hold,
                 { transform: [{ scale: pressed ? 1.06 : 1 }] },
@@ -55,6 +73,8 @@ export function EmotionPicker({ weights, onHoldStart, onHoldEnd, onClearOne }: P
             {w > 0 ? (
               <Pressable
                 hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel={`Clear ${e.label}, now ${pct} percent`}
                 onPress={() => {
                   tapTick();
                   onClearOne(e.key);

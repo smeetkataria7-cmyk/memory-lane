@@ -88,13 +88,13 @@ export default function TodayScreen() {
               <Text style={[styles.doneNote, { color: t.inkMuted }]}>{existing!.note}</Text>
             ) : null}
             <View style={styles.doneActions}>
-              <Pressable
+              <Pressable accessibilityRole="button"
                 onPress={() => router.push('/lane')}
                 style={[styles.btn, { backgroundColor: t.surface2 }]}
               >
                 <Text style={[styles.btnText, { color: t.inkMuted }]}>See your lane</Text>
               </Pressable>
-              <Pressable
+              <Pressable accessibilityRole="button"
                 onPress={startEditing}
                 style={[styles.btn, { backgroundColor: t.accent }]}
               >
@@ -166,18 +166,19 @@ export default function TodayScreen() {
           onHoldStart={pool.start}
           onHoldEnd={pool.stop}
           onClearOne={pool.clearOne}
+          onNudge={pool.nudge}
         />
 
         <View style={styles.actions}>
           {!empty && (
-            <Pressable
+            <Pressable accessibilityRole="button"
               onPress={pool.reset}
               style={[styles.btn, { backgroundColor: t.surface2 }]}
             >
               <Text style={[styles.btnText, { color: t.inkMuted }]}>Start over</Text>
             </Pressable>
           )}
-          <Pressable
+          <Pressable accessibilityRole="button"
             disabled={empty}
             onPress={() =>
               router.push({

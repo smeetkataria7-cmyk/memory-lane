@@ -85,7 +85,7 @@ export default function JourneyScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         <SpiralPage>
           {balls.map((b, i) => (
-            <Pressable
+            <Pressable accessibilityRole="button"
               key={b.id}
               onPress={() => router.push({ pathname: '/ball/[day]', params: { day: b.day } })}
               style={[

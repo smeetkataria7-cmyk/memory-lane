@@ -18,7 +18,7 @@ export function PressableScale({
   dim?: number;
 }) {
   return (
-    <Pressable
+    <Pressable accessibilityRole="button"
       {...rest}
       style={({ pressed }) => [
         style as ViewStyle,

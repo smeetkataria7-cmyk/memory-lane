@@ -47,7 +47,7 @@ function AudioButton({ url }: { url: string }) {
   };
 
   return (
-    <Pressable
+    <Pressable accessibilityRole="button"
       onPress={toggle}
       style={[styles.mediaItem, styles.mediaAlt, { backgroundColor: status.playing ? t.accent : t.surface2 }]}
     >
@@ -139,7 +139,7 @@ export default function BallDetailScreen() {
     return (
       <View style={[styles.center, { backgroundColor: t.paper }]}>
         <Text style={{ color: t.inkMuted }}>Nothing was saved for this day.</Text>
-        <Pressable onPress={() => router.back()} style={{ marginTop: spacing.md }}>
+        <Pressable accessibilityRole="button" onPress={() => router.back()} style={{ marginTop: spacing.md }}>
           <Text style={{ color: t.accent, fontWeight: '700' }}>Go back</Text>
         </Pressable>
       </View>
@@ -159,7 +159,7 @@ export default function BallDetailScreen() {
           { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.xl },
         ]}
       >
-        <Pressable onPress={() => router.back()}>
+        <Pressable accessibilityRole="button" onPress={() => router.back()}>
           <Text style={[styles.back, { color: t.accent }]}>‹ Back</Text>
         </Pressable>
 
@@ -209,7 +209,7 @@ export default function BallDetailScreen() {
               if (!m.url) return null;
               if (m.kind === 'photo') {
                 return (
-                  <Pressable key={m.id} onPress={() => setViewingImage(m.url)}>
+                  <Pressable accessibilityRole="button" accessibilityLabel="Open photo full size" key={m.id} onPress={() => setViewingImage(m.url)}>
                     <Image source={{ uri: m.url }} style={styles.mediaItem} />
                   </Pressable>
                 );
@@ -218,7 +218,7 @@ export default function BallDetailScreen() {
                 return <AudioButton key={m.id} url={m.url} />;
               }
               return (
-                <Pressable
+                <Pressable accessibilityRole="button"
                   key={m.id}
                   onPress={() => m.url && Linking.openURL(m.url)}
                   style={[styles.mediaItem, styles.mediaAlt, { backgroundColor: t.surface2 }]}
@@ -245,7 +245,7 @@ export default function BallDetailScreen() {
           <Switch value={ball.journey} onValueChange={togglePin} />
         </View>
 
-        <Pressable
+        <Pressable accessibilityRole="button"
           onPress={() => setPickerOpen(true)}
           style={[styles.row, { backgroundColor: t.surface, borderColor: t.line }]}
         >
@@ -272,7 +272,7 @@ export default function BallDetailScreen() {
       />
 
       <Modal visible={!!viewingImage} transparent animationType="fade">
-        <Pressable
+        <Pressable accessibilityRole="button"
           style={styles.modalOverlay}
           onPress={() => setViewingImage(null)}
         >

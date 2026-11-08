@@ -35,7 +35,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <Text style={[styles.detail, { color: t.inkFaint }]} numberOfLines={4}>
           {error.message}
         </Text>
-        <Pressable
+        <Pressable accessibilityRole="button"
           onPress={() => this.setState({ error: null })}
           style={[styles.btn, { backgroundColor: t.accent }]}
         >

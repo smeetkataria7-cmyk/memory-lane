@@ -95,7 +95,7 @@ export default function SignInScreen() {
         ) : null}
 
         <View style={styles.form}>
-          <Pressable
+          <Pressable accessibilityRole="button"
             onPress={withGoogle}
             disabled={busy}
             style={[styles.googleBtn, { backgroundColor: t.surface, borderColor: t.line }]}
@@ -139,7 +139,7 @@ export default function SignInScreen() {
 
           {error ? <Text style={[styles.error, { color: t.danger }]}>{error}</Text> : null}
 
-          <Pressable
+          <Pressable accessibilityRole="button"
             onPress={submit}
             disabled={busy || !email || !password}
             style={[
@@ -161,7 +161,7 @@ export default function SignInScreen() {
             )}
           </Pressable>
 
-          <Pressable onPress={() => { setMode(mode === 'in' ? 'up' : 'in'); setError(null); }}>
+          <Pressable accessibilityRole="button" onPress={() => { setMode(mode === 'in' ? 'up' : 'in'); setError(null); }}>
             <Text style={[styles.switch, { color: t.accent }]}>
               {mode === 'in' ? 'New here? Create an account' : 'Already have an account? Sign in'}
             </Text>

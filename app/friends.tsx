@@ -95,7 +95,7 @@ export default function FriendsScreen() {
       ]}
       keyboardShouldPersistTaps="handled"
     >
-      <Pressable onPress={() => router.back()}>
+      <Pressable accessibilityRole="button" onPress={() => router.back()}>
         <Text style={[styles.back, { color: t.accent }]}>‹ Back</Text>
       </Pressable>
       <Text style={[styles.title, { color: t.ink }]}>Friends</Text>
@@ -150,7 +150,7 @@ export default function FriendsScreen() {
             <Row key={r.id} profile={r.profile}>
               <View style={styles.actions}>
                 <Action label="Accept" onPress={() => run(() => acceptRequest(r.id))} />
-                <Pressable onPress={() => run(() => removeFriendship(r.id))} hitSlop={8}>
+                <Pressable accessibilityRole="button" onPress={() => run(() => removeFriendship(r.id))} hitSlop={8}>
                   <Text style={[styles.decline, { color: t.inkFaint }]}>Decline</Text>
                 </Pressable>
               </View>
@@ -163,7 +163,7 @@ export default function FriendsScreen() {
         <Section title="Sent">
           {outgoing.map((r) => (
             <Row key={r.id} profile={r.profile}>
-              <Pressable onPress={() => run(() => removeFriendship(r.id))} hitSlop={8}>
+              <Pressable accessibilityRole="button" onPress={() => run(() => removeFriendship(r.id))} hitSlop={8}>
                 <Text style={[styles.decline, { color: t.inkFaint }]}>Cancel</Text>
               </Pressable>
             </Row>
@@ -179,7 +179,7 @@ export default function FriendsScreen() {
         ) : (
           friends.map((p) => (
             <Row key={p.id} profile={p}>
-              <Pressable
+              <Pressable accessibilityRole="button"
                 onPress={() => userId && run(() => removeFriendByUser(userId, p.id))}
                 hitSlop={8}
               >
@@ -227,7 +227,7 @@ function Row({
 function Action({ label, onPress }: { label: string; onPress: () => void }) {
   const t = useTheme();
   return (
-    <Pressable onPress={onPress} style={[styles.action, { backgroundColor: t.accent }]}>
+    <Pressable accessibilityRole="button" onPress={onPress} style={[styles.action, { backgroundColor: t.accent }]}>
       <Text style={[styles.actionText, { color: '#fff' }]}>{label}</Text>
     </Pressable>
   );

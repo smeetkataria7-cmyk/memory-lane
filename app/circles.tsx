@@ -78,7 +78,7 @@ export default function CirclesScreen() {
         { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.xl },
       ]}
     >
-      <Pressable onPress={() => router.back()}>
+      <Pressable accessibilityRole="button" onPress={() => router.back()}>
         <Text style={[styles.back, { color: t.accent }]}>‹ Back</Text>
       </Pressable>
       <Text style={[styles.title, { color: t.ink }]}>Circles</Text>
@@ -92,7 +92,7 @@ export default function CirclesScreen() {
       ) : loadError ? (
         <View style={styles.errorBox}>
           <Text style={{ color: t.danger, fontSize: 14 }}>{loadError}</Text>
-          <Pressable
+          <Pressable accessibilityRole="button"
             onPress={() => { setLoading(true); refresh().finally(() => setLoading(false)); }}
             style={[styles.btn, { backgroundColor: t.surface2, marginTop: spacing.sm }]}
           >
@@ -228,12 +228,12 @@ function CircleCard({
           <Text style={[styles.codeLabel, { color: t.inkFaint }]}>INVITE CODE</Text>
           <Text style={[styles.codeValue, { color: t.ink }]}>{group.invite_code}</Text>
         </View>
-        <Pressable onPress={invite} style={[styles.sharePill, { backgroundColor: t.accent }]}>
+        <Pressable accessibilityRole="button" onPress={invite} style={[styles.sharePill, { backgroundColor: t.accent }]}>
           <Text style={styles.sharePillText}>Share</Text>
         </Pressable>
       </View>
 
-      <Pressable onPress={onLeave} hitSlop={8} style={styles.leaveRow}>
+      <Pressable accessibilityRole="button" onPress={onLeave} hitSlop={8} style={styles.leaveRow}>
         <Text style={[styles.leave, { color: t.danger }]}>Leave this circle</Text>
       </Pressable>
     </View>
