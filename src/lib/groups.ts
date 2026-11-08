@@ -65,6 +65,9 @@ export async function joinGroup(code: string): Promise<string> {
     code: code.trim().toUpperCase(),
   });
   if (error) throw error;
+  // A wrong code comes back as null rather than an error, so the database can
+  // record the miss and lock out anyone who keeps guessing.
+  if (!data) throw new Error("That invite code doesn't match any circle.");
   return data as string;
 }
 

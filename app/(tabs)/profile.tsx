@@ -3,6 +3,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,6 +14,7 @@ import {
 import { Avatar } from '../../src/components/Avatar';
 import { ReminderCard } from '../../src/components/ReminderCard';
 import { Screen } from '../../src/components/Screen';
+import { deleteMyAccount, shareMyData } from '../../src/lib/account';
 import { MemoryTree, nextStage } from '../../src/components/MemoryTree';
 import Constants from 'expo-constants';
 import { signOut, useAuth } from '../../src/lib/auth';
@@ -110,6 +112,44 @@ export default function ProfileScreen() {
     }
   };
 
+  const exportData = async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      await shareMyData();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not export your data.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const confirmDelete = () => {
+    if (!userId) return;
+    Alert.alert(
+      'Delete your account?',
+      'This permanently deletes your days, notes, photos, voice notes, friends and circle memberships. It cannot be undone. Export your data first if you want a copy.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete everything',
+          style: 'destructive',
+          onPress: async () => {
+            setError(null);
+            setBusy(true);
+            try {
+              await deleteMyAccount(userId);
+              // Signing out takes the user back to the sign-in screen.
+            } catch (e) {
+              setError(e instanceof Error ? e.message : 'Could not delete your account.');
+              setBusy(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   if (loading) {
     return (
       <Screen title="Profile">
@@ -129,7 +169,12 @@ export default function ProfileScreen() {
     <Screen title="Profile">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         <View style={styles.identity}>
-          <Pressable onPress={pickAvatar} disabled={busy}>
+          <Pressable
+            onPress={pickAvatar}
+            disabled={busy}
+            accessibilityRole="button"
+            accessibilityLabel="Change profile picture"
+          >
             <Avatar profile={shown} size={76} />
             <View style={[styles.editBadge, { backgroundColor: t.accent }]}>
               <Text style={styles.editBadgeText}>✎</Text>
@@ -149,10 +194,19 @@ export default function ProfileScreen() {
                   { backgroundColor: t.surface, borderColor: t.line, color: t.ink },
                 ]}
               />
-              <Pressable onPress={saveName} disabled={busy || !draftName.trim()}>
+              <Pressable
+                onPress={saveName}
+                disabled={busy || !draftName.trim()}
+                accessibilityRole="button"
+                accessibilityLabel="Save name"
+              >
                 <Text style={[styles.nameAction, { color: t.accent }]}>Save</Text>
               </Pressable>
-              <Pressable onPress={() => setEditing(false)}>
+              <Pressable
+                onPress={() => setEditing(false)}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel editing name"
+              >
                 <Text style={[styles.nameAction, { color: t.inkFaint }]}>Cancel</Text>
               </Pressable>
             </View>
@@ -162,6 +216,8 @@ export default function ProfileScreen() {
                 setDraftName(shown.display_name);
                 setEditing(true);
               }}
+              accessibilityRole="button"
+              accessibilityLabel={`Your name is ${shown.display_name || 'not set'}. Edit it.`}
             >
               <Text style={[styles.name, { color: t.ink }]}>
                 {shown.display_name || 'Add your name'}
@@ -195,6 +251,8 @@ export default function ProfileScreen() {
 
         <Pressable
           onPress={() => router.push('/friends')}
+          accessibilityRole="button"
+          accessibilityLabel={`Friends, ${counts.friends}`}
           style={[styles.link, { backgroundColor: t.surface, borderColor: t.line }]}
         >
           <Text style={[styles.linkTitle, { color: t.ink }]}>Friends</Text>
@@ -205,6 +263,8 @@ export default function ProfileScreen() {
 
         <Pressable
           onPress={() => router.push('/circles')}
+          accessibilityRole="button"
+          accessibilityLabel={`Circles, ${counts.circles}`}
           style={[styles.link, { backgroundColor: t.surface, borderColor: t.line }]}
         >
           <Text style={[styles.linkTitle, { color: t.ink }]}>Circles</Text>
@@ -213,8 +273,36 @@ export default function ProfileScreen() {
           </Text>
         </Pressable>
 
-        <Pressable onPress={signOut} style={[styles.signOut, { borderColor: t.line }]}>
+        <Pressable
+          onPress={exportData}
+          disabled={busy}
+          accessibilityRole="button"
+          accessibilityLabel="Export my data"
+          accessibilityHint="Saves a copy of everything Memory Lane holds about you"
+          style={[styles.link, { backgroundColor: t.surface, borderColor: t.line }]}
+        >
+          <Text style={[styles.linkTitle, { color: t.ink }]}>Export my data</Text>
+          <Text style={[styles.linkValue, { color: t.inkMuted }]}>›</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={signOut}
+          accessibilityRole="button"
+          accessibilityLabel="Sign out"
+          style={[styles.signOut, { borderColor: t.line }]}
+        >
           <Text style={[styles.signOutText, { color: t.danger }]}>Sign out</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={confirmDelete}
+          disabled={busy}
+          accessibilityRole="button"
+          accessibilityLabel="Delete my account"
+          accessibilityHint="Permanently deletes your account and everything in it"
+          style={styles.deleteAccount}
+        >
+          <Text style={[styles.deleteAccountText, { color: t.danger }]}>Delete my account</Text>
         </Pressable>
 
         {/* So "did the new build actually install?" is answerable by looking,
@@ -302,5 +390,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   signOutText: { fontSize: 15, fontWeight: '700' },
+  deleteAccount: { paddingVertical: 12, alignItems: 'center' },
+  deleteAccountText: { fontSize: 13, fontWeight: '600', textDecorationLine: 'underline' },
   build: { fontSize: 12, textAlign: 'center', marginTop: spacing.md },
 });
