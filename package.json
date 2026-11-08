@@ -19,6 +19,7 @@
     "expo-linking": "^57.0.4",
     "expo-notifications": "^57.0.8",
     "expo-router": "^57.0.9",
+    "expo-sharing": "~57.0.25",
     "expo-splash-screen": "^57.0.5",
     "expo-status-bar": "~57.0.1",
     "expo-web-browser": "^57.0.2",
@@ -37,6 +38,7 @@
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.15",
+    "@types/node": "^22.20.5",
     "@types/react": "~19.2.2",
     "typescript": "~6.0.3",
     "vitest": "^5.1.0"
@@ -46,7 +48,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tests",
     "test": "vitest run"
   },
   "private": true
