@@ -197,3 +197,32 @@ revoke all on function public.delete_my_account() from public, anon;
 revoke all on function public.export_my_data() from public, anon;
 grant execute on function public.delete_my_account() to authenticated;
 grant execute on function public.export_my_data() to authenticated;
+
+-- ---------- 5. keep a free project from being paused ----------
+-- Supabase pauses a Free project that has not had enough database activity in
+-- a week. keep_alive() does one tiny real write (it updates a single row), and
+-- .github/workflows/keep-alive.yml calls it every three days. It is callable
+-- without signing in, but it can only ever touch that one row.
+create table public.keep_alive_log (
+  id int primary key default 1 check (id = 1),
+  pinged_at timestamptz not null default now()
+);
+alter table public.keep_alive_log enable row level security;
+
+create function public.keep_alive()
+returns timestamptz
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  t timestamptz;
+begin
+  insert into public.keep_alive_log (id, pinged_at) values (1, now())
+  on conflict (id) do update set pinged_at = excluded.pinged_at
+  returning pinged_at into t;
+  return t;
+end;
+$$;
+
+revoke all on function public.keep_alive() from public;
+grant execute on function public.keep_alive() to anon, authenticated;

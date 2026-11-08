@@ -223,3 +223,28 @@ describe('export my data', () => {
     await expect(asAnon(db, () => db.query('select public.export_my_data()'))).rejects.toThrow(denied);
   });
 });
+
+describe('keep-alive ping', () => {
+  const ping = () =>
+    asAnon(db, async () => (await db.query('select public.keep_alive() as t')).rows[0] as { t: Date | string });
+
+  it('works without signing in and returns the time of the ping', async () => {
+    const { t } = await ping();
+    expect(new Date(t).getTime()).not.toBeNaN();
+  });
+
+  it('only ever touches one row, however often it is called', async () => {
+    await ping();
+    await ping();
+    await ping();
+    expect(
+      ((await db.query('select count(*)::int as n from public.keep_alive_log')).rows[0] as { n: number }).n,
+    ).toBe(1);
+  });
+
+  it('gives a signed-out caller no access to any data', async () => {
+    await expect(asAnon(db, () => db.query('select * from public.keep_alive_log'))).rejects.toThrow(denied);
+    await expect(asAnon(db, () => db.query('select * from public.balls'))).rejects.toThrow(denied);
+    await expect(asAnon(db, () => db.query('select * from public.profiles'))).rejects.toThrow(denied);
+  });
+});
